@@ -1,0 +1,19 @@
+name: DresdenAirlines
+version: 4.0.0
+main: de.dresdenairlines.DresdenAirlines
+api-version: '1.21'
+description: Multiplayer airline, airport and passenger flight simulation
+author: DresdenAirlines
+commands:
+  airline:
+    description: Manage your airline
+    usage: /airline
+  airport:
+    description: Airport management and locator
+    usage: /airport
+  flight:
+    description: Book passenger flights
+    usage: /flight
+permissions:
+  dresdenairlines.admin:
+    default: op

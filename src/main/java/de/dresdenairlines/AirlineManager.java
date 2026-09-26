@@ -1,0 +1,23 @@
+package de.dresdenairlines;
+import java.util.*;
+public final class AirlineManager {
+ final DresdenAirlines p; final Random random=new Random(); AirlineManager(DresdenAirlines p){this.p=p;}
+ public String newAircraftId(){return "AC-"+UUID.randomUUID().toString().substring(0,8).toUpperCase();}
+ public String registration(Airline a){return "D-"+a.code+String.format("%02d",a.fleet.size()+1);}
+ public Aircraft buy(Airline a,String type){if(!p.getConfig().isConfigurationSection("aircraft."+type))return null;double price=p.getConfig().getDouble("aircraft."+type+".price");if(a.money<price)return null;int seats=p.getConfig().getInt("aircraft."+type+".seats"),range=p.getConfig().getInt("aircraft."+type+".range");String model=p.getConfig().getString("aircraft."+type+".model",type.toLowerCase());Aircraft ac=new Aircraft(newAircraftId(),type,model,registration(a),seats,range);a.money-=price;a.fleet.add(ac);p.storage.save();return ac;}
+ public boolean addRoute(Airline a,String from,String to,String aircraft,int price,int freq){if(from.equalsIgnoreCase(to)||p.airports.airports.get(from)==null||p.airports.airports.get(to)==null)return false;Aircraft ac=a.fleet.stream().filter(x->x.id.equals(aircraft)).findFirst().orElse(null);if(ac==null)return false;double dist=p.airports.airports.get(from).center().distance(p.airports.airports.get(to).center())/10.0;if(dist>ac.range)return false;a.routes.add(new Route(from,to,aircraft,price,Math.max(60,freq)));p.storage.save();return true;}
+ public Flight schedule(Airline a,Route r){long now=System.currentTimeMillis();if(now-r.lastScheduledAt<r.frequencySeconds*1000L)return null;Aircraft ac=a.fleet.stream().filter(x->x.id.equals(r.aircraftId)).findFirst().orElse(null);if(ac==null||now<ac.nextAvailable)return null;Airport from=p.airports.airports.get(r.from),to=p.airports.airports.get(r.to);if(from==null||to==null)return null;String id=a.code+"-"+(100+a.routes.indexOf(r))+"-"+(now/1000%1000);Flight f=new Flight(id,a,ac,from,to,r.ticketPrice,now);f.demandScore=.50;f.npcBooked=0;if(p.gates.assignDeparture(f)==null)return null;p.storage.flights.put(id,f);long flightSeconds=Math.max(30,(long)(from.center().distance(to.center())/100*p.getConfig().getDouble("traffic.flight-seconds-per-100-blocks",3)));f.boardingAt=now+10000;f.departureAt=f.boardingAt+Math.max(5,p.getConfig().getInt("traffic.boarding-seconds",30))*1000L;f.arrivalAt=f.departureAt+flightSeconds*1000;p.preGenerator.prepare(f);ac.nextAvailable=f.arrivalAt+60000;r.lastScheduledAt=now;p.storage.save();return f;}
+ public void economyTick(){long now=System.currentTimeMillis();for(Airline a:p.storage.airlines.values())for(Route r:a.routes)if(r.enabled){boolean active=p.storage.flights.values().stream().anyMatch(f->f.airline==a&&f.from.id().equals(r.from)&&f.to.id().equals(r.to)&&f.status!=FlightStatus.LANDED&&f.status!=FlightStatus.CANCELLED);if(!active)schedule(a,r);}for(Flight f:new ArrayList<>(p.storage.flights.values())){update(f,now);if(f.status==FlightStatus.LANDED&&now-f.arrivalAt>30000){p.gates.releaseAll(f);p.storage.flights.remove(f.id);}}}
+ private void update(Flight f,long now){
+  if(f.status==FlightStatus.SCHEDULED&&now>=f.boardingAt)f.status=FlightStatus.BOARDING;
+  if(f.status==FlightStatus.BOARDING&&now>=f.departureAt){
+    if(f.delayUntil>now){return;}
+    if(!f.routeReady){f.departureAt=now+1000;f.arrivalAt=f.departureAt+Math.max(30,(long)(f.from.center().distance(f.to.center())/100*p.getConfig().getDouble("traffic.flight-seconds-per-100-blocks",3)))*1000L;return;}
+    f.status=FlightStatus.TAXIING; f.departureAt=now+5000; f.arrivalAt=f.departureAt+Math.max(30,(long)(f.from.center().distance(f.to.center())/100*p.getConfig().getDouble("traffic.flight-seconds-per-100-blocks",3)))*1000L;
+  }
+  if(f.status==FlightStatus.TAXIING&&now>=f.departureAt){f.status=FlightStatus.DEPARTED;p.gates.releaseDeparture(f);double dist=f.from.center().distance(f.to.center())/100.0;double costs=p.getConfig().getDouble("economy.landing-fee")+dist*p.getConfig().getDouble("economy.fuel-per-100-blocks")+p.getConfig().getDouble("economy.maintenance-per-flight");f.airline.money-=costs;f.aircraft.condition=Math.max(.1,f.aircraft.condition-.01);}
+  if(f.status==FlightStatus.DEPARTED&&now>=f.departureAt+3000)f.status=FlightStatus.CRUISE;
+  if(f.status==FlightStatus.CRUISE&&now>=f.arrivalAt-15000){f.status=FlightStatus.APPROACH;if(p.gates.assignArrival(f)==null){f.arrivalAt=now+5000;return;}}
+  if(f.status==FlightStatus.APPROACH&&now>=f.arrivalAt){f.status=FlightStatus.LANDED;f.airline.money+=(long)f.booked*f.ticketPrice*.85;f.airline.reputation=Math.min(100,f.airline.reputation+.05);p.airportLevels.recordFlight(f);}
+}
+}

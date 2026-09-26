@@ -1,0 +1,101 @@
+airports:
+  automatic-generation: true
+  grid-size: 4096
+  generation-chance: 0.22
+  minimum-distance: 1800
+  allowed-worlds:
+    - world
+  save-world-after-generation: true
+  terrain-search-radius: 192
+  terrain-search-step: 12
+  max-terrain-height-difference: 8
+  runway-length: 180
+  terminal-width: 55
+  terminal-depth: 35
+  village-generation:
+    enabled: true
+    chance: 0.16
+    search-radius: 96
+    size: 45
+    offset-x: 90
+    offset-z: 90
+traffic:
+  enabled: true
+  spawn-interval-seconds: 20
+  flight-seconds-per-100-blocks: 3
+  max-active-aircraft: 8
+  boarding-seconds: 30
+  route-pregeneration:
+    enabled: true
+    radius-chunks: 2
+    sample-spacing-chunks: 2
+    delay-ticks-between-chunks: 1
+economy:
+  starting-money: 250000
+  landing-fee: 800
+  fuel-per-100-blocks: 35
+  maintenance-per-flight: 500
+  passenger-demand-per-minute: 3
+  base-ticket-price: 80
+passengers:
+  enabled: true
+  starting-money: 10000
+  offline-no-show-refund-percent: 50
+  npc-simulation:
+    enabled: true
+    spawn-before-departure-seconds: 30
+    max-spawn-per-tick: 8
+    price-sensitivity: 0.90
+aircraft:
+  A220-300:
+    seats: 145
+    range: 5900
+    price: 450000
+    model: a220_300
+  A320:
+    seats: 180
+    range: 6100
+    price: 650000
+    model: a320
+  A330-300:
+    seats: 287
+    range: 13300
+    price: 1400000
+    model: a330_300
+  A350-900:
+    seats: 325
+    range: 15000
+    price: 2100000
+    model: a350_900
+  ERJ195:
+    seats: 120
+    range: 4300
+    price: 390000
+    model: erj195
+railways:
+  village-stations:
+    enabled: true
+    search-radius: 96
+    max-distance: 1800
+  minecart-service:
+    enabled: true
+    interval-seconds: 120
+
+
+airport-levels:
+  enabled: true
+  level-2-passengers: 250
+  level-3-passengers: 750
+  level-4-passengers: 2000
+  level-5-passengers: 5000
+
+events:
+  enabled: true
+  chance: 0.22
+
+baggage:
+  enabled: true
+  max-carts-per-flight: 3
+
+ranking:
+  enabled: true
