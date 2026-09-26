@@ -16,417 +16,429 @@ import java.util.*;
  * Generates persistent village railway stations
  * and real Minecraft rail connections to airports.
  */
-public final class StationManager {
+public final class StationManager implements Listener {
 
     private final DresdenAirlines plugin;
     private final File file;
     private YamlConfiguration data;
 
-    public final Map<String,Station> stations=
-        new LinkedHashMap<>();
+    public final Map<String, Station> stations =
+            new LinkedHashMap<>();
 
-    private final Set<String> villageChecks=
-        new HashSet<>();
+    private final Set<String> villageChecks =
+            new HashSet<>();
 
-    StationManager(DresdenAirlines p){
-        plugin=p;
-        file=new File(
-            p.getDataFolder(),
-            "stations.yml"
+    StationManager(DresdenAirlines p) {
+        plugin = p;
+        file = new File(
+                p.getDataFolder(),
+                "stations.yml"
         );
-        data=
-            YamlConfiguration.loadConfiguration(
-                file
-            );
+
+        data = YamlConfiguration.loadConfiguration(file);
     }
 
-    public void load(){
+    public void load() {
         stations.clear();
 
-        data=
-            YamlConfiguration.loadConfiguration(
-                file
-            );
+        data = YamlConfiguration.loadConfiguration(file);
 
-        for(String id:data.getKeys(false)){
-            try{
-                World w=
-                    Bukkit.getWorld(
+        for (String id : data.getKeys(false)) {
+            try {
+                World w = Bukkit.getWorld(
                         UUID.fromString(
-                            data.getString(
-                                id+".world-uuid"
-                            )
+                                data.getString(
+                                        id + ".world-uuid"
+                                )
                         )
-                    );
+                );
 
-                if(w==null){
-                    w=Bukkit.getWorld(
-                        data.getString(
-                            id+".world"
-                        )
+                if (w == null) {
+                    w = Bukkit.getWorld(
+                            data.getString(
+                                    id + ".world"
+                            )
                     );
                 }
 
-                if(w==null)
+                if (w == null) {
                     continue;
+                }
 
-                Location s=
-                    new Location(
+                Location s = new Location(
                         w,
-                        data.getDouble(id+".sx"),
-                        data.getDouble(id+".sy"),
-                        data.getDouble(id+".sz")
-                    );
-
-                Location a=
-                    new Location(
-                        w,
-                        data.getDouble(id+".ax"),
-                        data.getDouble(id+".ay"),
-                        data.getDouble(id+".az")
-                    );
-
-                stations.put(
-                    id,
-                    new Station(
-                        id,
-                        data.getString(
-                            id+".name",
-                            id
-                        ),
-                        data.getString(
-                            id+".airport-id",
-                            ""
-                        ),
-                        s,
-                        a
-                    )
+                        data.getDouble(id + ".sx"),
+                        data.getDouble(id + ".sy"),
+                        data.getDouble(id + ".sz")
                 );
 
-            }catch(Exception ex){
+                Location a = new Location(
+                        w,
+                        data.getDouble(id + ".ax"),
+                        data.getDouble(id + ".ay"),
+                        data.getDouble(id + ".az")
+                );
+
+                stations.put(
+                        id,
+                        new Station(
+                                id,
+                                data.getString(
+                                        id + ".name",
+                                        id
+                                ),
+                                data.getString(
+                                        id + ".airport-id",
+                                        ""
+                                ),
+                                s,
+                                a
+                        )
+                );
+
+            } catch (Exception ex) {
                 plugin.getLogger().warning(
-                    "Station load failed: "+
-                    id+" "+
-                    ex.getMessage()
+                        "Station load failed: "
+                                + id
+                                + " "
+                                + ex.getMessage()
                 );
             }
         }
     }
 
-    public void save(){
-        YamlConfiguration y=
-            new YamlConfiguration();
+    public void save() {
+        YamlConfiguration y =
+                new YamlConfiguration();
 
-        for(Station s:stations.values()){
-            String k=s.id();
-            World w=s.station().getWorld();
+        for (Station s : stations.values()) {
+
+            String k = s.id();
+
+            World w = s.station().getWorld();
 
             y.set(
-                k+".name",
-                s.name()
+                    k + ".name",
+                    s.name()
             );
 
             y.set(
-                k+".airport-id",
-                s.airportId()
+                    k + ".airport-id",
+                    s.airportId()
             );
 
             y.set(
-                k+".world",
-                w.getName()
+                    k + ".world",
+                    w.getName()
             );
 
             y.set(
-                k+".world-uuid",
-                w.getUID().toString()
+                    k + ".world-uuid",
+                    w.getUID().toString()
             );
 
             y.set(
-                k+".sx",
-                s.station().getX()
+                    k + ".sx",
+                    s.station().getX()
             );
 
             y.set(
-                k+".sy",
-                s.station().getY()
+                    k + ".sy",
+                    s.station().getY()
             );
 
             y.set(
-                k+".sz",
-                s.station().getZ()
+                    k + ".sz",
+                    s.station().getZ()
             );
 
             y.set(
-                k+".ax",
-                s.airportRail().getX()
+                    k + ".ax",
+                    s.airportRail().getX()
             );
 
             y.set(
-                k+".ay",
-                s.airportRail().getY()
+                    k + ".ay",
+                    s.airportRail().getY()
             );
 
             y.set(
-                k+".az",
-                s.airportRail().getZ()
+                    k + ".az",
+                    s.airportRail().getZ()
             );
         }
 
-        try{
+        try {
             y.save(file);
-            data=y;
-
-        }catch(Exception e){
+            data = y;
+        } catch (Exception e) {
             plugin.getLogger().warning(
-                "Station save failed: "+
-                e.getMessage()
+                    "Station save failed: "
+                            + e.getMessage()
             );
         }
     }
 
     public void scanVillage(
-        World w,
-        Location probe
-    ){
-        if(
-            !plugin.getConfig()
-                .getBoolean(
-                    "railways.village-stations.enabled",
-                    true
-                )
-        ){
+            World w,
+            Location probe
+    ) {
+        if (!plugin.getConfig().getBoolean(
+                "railways.village-stations.enabled",
+                true
+        )) {
             return;
         }
 
-        if(
-            !plugin.getConfig()
-                .getStringList(
-                    "airports.allowed-worlds"
-                )
-                .isEmpty() &&
-            !plugin.getConfig()
-                .getStringList(
-                    "airports.allowed-worlds"
-                )
-                .contains(w.getName())
-        ){
+        if (
+                !plugin.getConfig()
+                        .getStringList(
+                                "airports.allowed-worlds"
+                        )
+                        .isEmpty()
+                &&
+                !plugin.getConfig()
+                        .getStringList(
+                                "airports.allowed-worlds"
+                        )
+                        .contains(w.getName())
+        ) {
             return;
         }
 
-        String key=
-            w.getUID()+":"+
-            (probe.getBlockX()>>6)+":"+
-            (probe.getBlockZ()>>6);
+        String key =
+                w.getUID()
+                        + ":"
+                        + (probe.getBlockX() >> 6)
+                        + ":"
+                        + (probe.getBlockZ() >> 6);
 
-        if(!villageChecks.add(key))
+        if (!villageChecks.add(key)) {
             return;
+        }
 
-        try{
-            Location v=
-                w.locateNearestStructure(
-                    probe,
-                    org.bukkit.StructureType.VILLAGE,
-                    plugin.getConfig().getInt(
-                        "railways.village-stations.search-radius",
-                        96
-                    ),
-                    false
-                );
+        try {
 
-            if(v==null)
-                return;
+            Location v =
+                    w.locateNearestStructure(
+                            probe,
+                            org.bukkit.StructureType.VILLAGE,
+                            plugin.getConfig().getInt(
+                                    "railways.village-stations.search-radius",
+                                    96
+                            ),
+                            false
+                    );
 
-            String vk=
-                w.getUID()+":"+
-                (v.getBlockX()>>6)+":"+
-                (v.getBlockZ()>>6);
-
-            String id=
-                "V"+
-                Integer.toUnsignedString(
-                    vk.hashCode(),
-                    36
-                ).toUpperCase(Locale.ROOT);
-
-            if(stations.containsKey(id))
-                return;
-
-            Airport ap=
-                plugin.airports.nearest(v);
-
-            if(ap==null)
-                return;
-
-            double max=
-                plugin.getConfig().getDouble(
-                    "railways.village-stations.max-distance",
-                    1800
-                );
-
-            if(
-                ap.center().distance(v)>max
-            ){
+            if (v == null) {
                 return;
             }
 
-            Location station=
-                findStationSite(
-                    v,
-                    ap
-                );
+            String vk =
+                    w.getUID()
+                            + ":"
+                            + (v.getBlockX() >> 6)
+                            + ":"
+                            + (v.getBlockZ() >> 6);
 
-            if(station==null)
+            String id =
+                    "V"
+                            + Integer.toUnsignedString(
+                                    vk.hashCode(),
+                                    36
+                            )
+                            .toUpperCase(
+                                    Locale.ROOT
+                            );
+
+            if (stations.containsKey(id)) {
                 return;
+            }
 
-            Station st=
-                new Station(
-                    id,
-                    "Dorf-Bahnhof → "+ap.id(),
-                    ap.id(),
-                    station,
-                    airportRailPoint(
-                        ap,
-                        station
-                    )
-                );
+            Airport ap =
+                    plugin.airports.nearest(v);
 
-            stations.put(id,st);
+            if (ap == null) {
+                return;
+            }
+
+            double max =
+                    plugin.getConfig().getDouble(
+                            "railways.village-stations.max-distance",
+                            1800
+                    );
+
+            if (ap.center().distance(v) > max) {
+                return;
+            }
+
+            Location station =
+                    findStationSite(
+                            v,
+                            ap
+                    );
+
+            if (station == null) {
+                return;
+            }
+
+            Station st =
+                    new Station(
+                            id,
+                            "Dorf-Bahnhof → "
+                                    + ap.id(),
+                            ap.id(),
+                            station,
+                            airportRailPoint(
+                                    ap,
+                                    station
+                            )
+                    );
+
+            stations.put(id, st);
 
             buildStation(st);
             save();
 
-        }catch(Exception e){
+        } catch (Exception e) {
             plugin.getLogger().fine(
-                "Village station skipped: "+
-                e.getMessage()
+                    "Village station skipped: "
+                            + e.getMessage()
             );
         }
     }
 
     private Location findStationSite(
-        Location v,
-        Airport ap
-    ){
-        World w=v.getWorld();
+            Location v,
+            Airport ap
+    ) {
+        World w = v.getWorld();
 
-        double dx=
-            ap.center().getX()-v.getX();
+        double dx =
+                ap.center().getX()
+                        - v.getX();
 
-        double dz=
-            ap.center().getZ()-v.getZ();
+        double dz =
+                ap.center().getZ()
+                        - v.getZ();
 
-        double len=
-            Math.max(
-                1,
-                Math.hypot(dx,dz)
-            );
+        double len =
+                Math.max(
+                        1,
+                        Math.hypot(dx, dz)
+                );
 
-        double ox=
-            -dz/len*18;
+        double ox =
+                -dz / len * 18;
 
-        double oz=
-            dx/len*18;
+        double oz =
+                dx / len * 18;
 
-        int x=
-            v.getBlockX()+
-            (int)Math.round(ox);
+        int x =
+                v.getBlockX()
+                        + (int) Math.round(ox);
 
-        int z=
-            v.getBlockZ()+
-            (int)Math.round(oz);
+        int z =
+                v.getBlockZ()
+                        + (int) Math.round(oz);
 
         return new Location(
-            w,
-            x,
-            w.getHighestBlockYAt(x,z)+1,
-            z
+                w,
+                x,
+                w.getHighestBlockYAt(x, z) + 1,
+                z
         );
     }
 
     private Location airportRailPoint(
-        Airport ap,
-        Location village
-    ){
-        World w=
-            ap.center().getWorld();
+            Airport ap,
+            Location village
+    ) {
+        World w =
+                ap.center().getWorld();
 
-        double dx=
-            village.getX()-
-            ap.center().getX();
+        double dx =
+                village.getX()
+                        - ap.center().getX();
 
-        double dz=
-            village.getZ()-
-            ap.center().getZ();
+        double dz =
+                village.getZ()
+                        - ap.center().getZ();
 
-        double len=
-            Math.max(
-                1,
-                Math.hypot(dx,dz)
-            );
+        double len =
+                Math.max(
+                        1,
+                        Math.hypot(dx, dz)
+                );
 
-        int x=
-            (int)Math.round(
-                ap.center().getX()+
-                dx/len*(ap.size()+20)
-            );
+        int x =
+                (int) Math.round(
+                        ap.center().getX()
+                                + dx / len
+                                * (ap.size() + 20)
+                );
 
-        int z=
-            (int)Math.round(
-                ap.center().getZ()+
-                dz/len*(ap.size()+20)
-            );
+        int z =
+                (int) Math.round(
+                        ap.center().getZ()
+                                + dz / len
+                                * (ap.size() + 20)
+                );
 
         return new Location(
-            w,
-            x,
-            w.getHighestBlockYAt(x,z)+1,
-            z
+                w,
+                x,
+                w.getHighestBlockYAt(x, z) + 1,
+                z
         );
     }
 
     private void buildStation(
-        Station s
-    ){
-        Location l=s.station();
-        World w=l.getWorld();
+            Station s
+    ) {
+        Location l =
+                s.station();
+
+        World w =
+                l.getWorld();
 
         fill(
-            l.clone().add(-6,-1,-8),
-            l.clone().add(6,2,8),
-            Material.SMOOTH_STONE
+                l.clone().add(-6, -1, -8),
+                l.clone().add(6, 2, 8),
+                Material.SMOOTH_STONE
         );
 
         fill(
-            l.clone().add(-5,2,-6),
-            l.clone().add(5,4,6),
-            Material.GLASS
+                l.clone().add(-5, 2, -6),
+                l.clone().add(5, 4, 6),
+                Material.GLASS
         );
 
-        for(int x=-5;x<=5;x++){
+        for (int x = -5; x <= 5; x++) {
             set(
-                l.clone().add(x,0,-1),
-                Material.POLISHED_BLACKSTONE
+                    l.clone().add(x, 0, -1),
+                    Material.POLISHED_BLACKSTONE
             );
         }
 
         set(
-            l.clone().add(0,2,0),
-            Material.SEA_LANTERN
+                l.clone().add(0, 2, 0),
+                Material.SEA_LANTERN
         );
 
         set(
-            l.clone().add(0,3,0),
-            Material.OAK_SIGN
+                l.clone().add(0, 3, 0),
+                Material.OAK_SIGN
         );
 
         set(
-            l.clone().add(0,1,-7),
-            Material.STONE
+                l.clone().add(0, 1, -7),
+                Material.STONE
         );
 
         set(
-            l.clone().add(0,1,-6),
-            Material.STONE_BUTTON
+                l.clone().add(0, 1, -6),
+                Material.STONE_BUTTON
         );
 
         buildRail(s);
@@ -435,176 +447,182 @@ public final class StationManager {
     }
 
     private void buildRail(
-        Station s
-    ){
-        Location a=
-            s.station()
-                .clone()
-                .add(0,0,-1);
+            Station s
+    ) {
+        Location a =
+                s.station()
+                        .clone()
+                        .add(0, 0, -1);
 
-        Location b=
-            s.airportRail();
+        Location b =
+                s.airportRail();
 
-        World w=a.getWorld();
+        World w =
+                a.getWorld();
 
-        List<Location> path=
-            new ArrayList<>();
+        List<Location> path =
+                new ArrayList<>();
 
-        int x=a.getBlockX();
-        int z=a.getBlockZ();
+        int x =
+                a.getBlockX();
 
-        int tx=b.getBlockX();
-        int tz=b.getBlockZ();
+        int z =
+                a.getBlockZ();
 
-        int total=
-            Math.max(
-                1,
-                Math.abs(tx-x)+
-                Math.abs(tz-z)
-            );
+        int tx =
+                b.getBlockX();
 
-        int done=0;
+        int tz =
+                b.getBlockZ();
 
-        while(x!=tx){
-            x+=Integer.compare(tx,x);
-            done++;
-
-            int y=
-                (int)Math.round(
-                    a.getY()+
-                    (b.getY()-a.getY())*
-                    (done/(double)total)
+        int total =
+                Math.max(
+                        1,
+                        Math.abs(tx - x)
+                                + Math.abs(tz - z)
                 );
 
+        int done = 0;
+
+        while (x != tx) {
+            x += Integer.compare(tx, x);
+            done++;
+
+            int y =
+                    (int) Math.round(
+                            a.getY()
+                                    + (b.getY() - a.getY())
+                                    * (done / (double) total)
+                    );
+
             path.add(
-                new Location(
-                    w,
-                    x,
-                    y,
-                    z
-                )
+                    new Location(
+                            w,
+                            x,
+                            y,
+                            z
+                    )
             );
         }
 
-        while(z!=tz){
-            z+=Integer.compare(tz,z);
+        while (z != tz) {
+            z += Integer.compare(tz, z);
             done++;
 
-            int y=
-                (int)Math.round(
-                    a.getY()+
-                    (b.getY()-a.getY())*
-                    (done/(double)total)
-                );
+            int y =
+                    (int) Math.round(
+                            a.getY()
+                                    + (b.getY() - a.getY())
+                                    * (done / (double) total)
+                    );
 
             path.add(
-                new Location(
-                    w,
-                    x,
-                    y,
-                    z
-                )
+                    new Location(
+                            w,
+                            x,
+                            y,
+                            z
+                    )
             );
         }
 
-        Location prev=a;
+        Location prev = a;
 
-        org.bukkit.block.Block start=
-            a.getBlock();
+        org.bukkit.block.Block start =
+                a.getBlock();
 
         start.setType(
-            Material.POWERED_RAIL
+                Material.POWERED_RAIL
         );
 
-        Rail sr=
-            (Rail)start.getBlockData();
+        Rail sr =
+                (Rail) start.getBlockData();
 
         sr.setShape(
-            Rail.Shape.EAST_WEST
+                Math.abs(tx - x)
+                        >= Math.abs(tz - z)
+                        ? Rail.Shape.EAST_WEST
+                        : Rail.Shape.NORTH_SOUTH
         );
 
         start.setBlockData(sr);
 
         set(
-            a.clone().add(0,-1,0),
-            Material.REDSTONE_BLOCK
+                a.clone().add(0, -1, 0),
+                Material.REDSTONE_BLOCK
         );
 
-        for(Location raw:path){
+        for (Location raw : path) {
 
-            int y=
-                Math.max(
-                    prev.getBlockY()-1,
-                    Math.min(
-                        prev.getBlockY()+1,
-                        raw.getBlockY()
-                    )
-                );
+            int y =
+                    Math.max(
+                            prev.getBlockY() - 1,
+                            Math.min(
+                                    prev.getBlockY() + 1,
+                                    raw.getBlockY()
+                            )
+                    );
 
-            Location p=
-                new Location(
-                    w,
-                    raw.getBlockX(),
-                    y,
-                    raw.getBlockZ()
-                );
+            Location p =
+                    new Location(
+                            w,
+                            raw.getBlockX(),
+                            y,
+                            raw.getBlockZ()
+                    );
 
             set(
-                p.clone().add(0,-1,0),
-                Material.STONE
+                    p.clone().add(0, -1, 0),
+                    Material.STONE
             );
 
-            org.bukkit.block.Block rb=
-                p.getBlock();
+            org.bukkit.block.Block rb =
+                    p.getBlock();
 
             rb.setType(
-                Material.POWERED_RAIL
+                    Material.POWERED_RAIL
             );
 
-            Rail rd=
-                (Rail)rb.getBlockData();
+            Rail rd =
+                    (Rail) rb.getBlockData();
 
-            int dx=
-                p.getBlockX()-
-                prev.getBlockX();
+            int dx =
+                    p.getBlockX()
+                            - prev.getBlockX();
 
-            int dz=
-                p.getBlockZ()-
-                prev.getBlockZ();
+            int dz =
+                    p.getBlockZ()
+                            - prev.getBlockZ();
 
-            if(dx!=0){
+            if (dx != 0) {
 
-                if(y>prev.getBlockY()){
+                if (y > prev.getBlockY()) {
                     rd.setShape(
-                        Rail.Shape.ASCENDING_EAST
+                            Rail.Shape.ASCENDING_EAST
                     );
-
-                }else if(y<prev.getBlockY()){
+                } else if (y < prev.getBlockY()) {
                     rd.setShape(
-                        Rail.Shape.ASCENDING_WEST
+                            Rail.Shape.ASCENDING_WEST
                     );
-
-                }else{
+                } else {
                     rd.setShape(
-                        Rail.Shape.EAST_WEST
+                            Rail.Shape.EAST_WEST
                     );
                 }
 
-            }else{
+            } else {
 
-                if(y>prev.getBlockY()){
+                if (y > prev.getBlockY()) {
                     rd.setShape(
-                        Rail.Shape.ASCENDING_NORTH
+                            Rail.Shape.ASCENDING_NORTH
                     );
-
-                }else if(y<prev.getBlockY()){
+                } else if (y < prev.getBlockY()) {
                     rd.setShape(
-                        Rail.Shape.ASCENDING_SOUTH
+                            Rail.Shape.ASCENDING_SOUTH
                     );
-
-                }else{
+                } else {
                     rd.setShape(
-                        Rail.Shape.NORTH_SOUTH
+                            Rail.Shape.NORTH_SOUTH
                     );
                 }
             }
@@ -612,188 +630,201 @@ public final class StationManager {
             rb.setBlockData(rd);
 
             set(
-                p.clone().add(0,-1,0),
-                Material.REDSTONE_BLOCK
+                    p.clone().add(0, -1, 0),
+                    Material.REDSTONE_BLOCK
             );
 
-            prev=p;
+            prev = p;
         }
     }
 
     private void set(
-        Location l,
-        Material m
-    ){
+            Location l,
+            Material m
+    ) {
         l.getBlock().setType(m);
     }
 
     private void fill(
-        Location a,
-        Location b,
-        Material m
-    ){
-        int x1=
-            Math.min(
-                a.getBlockX(),
-                b.getBlockX()
-            );
+            Location a,
+            Location b,
+            Material m
+    ) {
+        int x1 =
+                Math.min(
+                        a.getBlockX(),
+                        b.getBlockX()
+                );
 
-        int x2=
-            Math.max(
-                a.getBlockX(),
-                b.getBlockX()
-            );
+        int x2 =
+                Math.max(
+                        a.getBlockX(),
+                        b.getBlockX()
+                );
 
-        int y1=
-            Math.min(
-                a.getBlockY(),
-                b.getBlockY()
-            );
+        int y1 =
+                Math.min(
+                        a.getBlockY(),
+                        b.getBlockY()
+                );
 
-        int y2=
-            Math.max(
-                a.getBlockY(),
-                b.getBlockY()
-            );
+        int y2 =
+                Math.max(
+                        a.getBlockY(),
+                        b.getBlockY()
+                );
 
-        int z1=
-            Math.min(
-                a.getBlockZ(),
-                b.getBlockZ()
-            );
+        int z1 =
+                Math.min(
+                        a.getBlockZ(),
+                        b.getBlockZ()
+                );
 
-        int z2=
-            Math.max(
-                a.getBlockZ(),
-                b.getBlockZ()
-            );
+        int z2 =
+                Math.max(
+                        a.getBlockZ(),
+                        b.getBlockZ()
+                );
 
-        for(int x=x1;x<=x2;x++)
-            for(int y=y1;y<=y2;y++)
-                for(int z=z1;z<=z2;z++)
+        for (int x = x1; x <= x2; x++) {
+            for (int y = y1; y <= y2; y++) {
+                for (int z = z1; z <= z2; z++) {
+
                     set(
-                        new Location(
-                            a.getWorld(),
-                            x,
-                            y,
-                            z
-                        ),
-                        m
+                            new Location(
+                                    a.getWorld(),
+                                    x,
+                                    y,
+                                    z
+                            ),
+                            m
                     );
+                }
+            }
+        }
     }
 
+    /*
+     * IMPORTANT:
+     * This annotation is required so Bukkit actually
+     * calls this method when a chunk loads.
+     */
+    @EventHandler(ignoreCancelled = true)
     public void onChunkLoad(
-        ChunkLoadEvent e
-    ){
-        Location probe=
-            new Location(
-                e.getWorld(),
-                e.getChunk().getX()*16+8,
-                64,
-                e.getChunk().getZ()*16+8
-            );
+            ChunkLoadEvent e
+    ) {
+        Location probe =
+                new Location(
+                        e.getWorld(),
+                        e.getChunk().getX() * 16 + 8,
+                        64,
+                        e.getChunk().getZ() * 16 + 8
+                );
 
         plugin.getServer()
-            .getScheduler()
-            .runTaskLater(
-                plugin,
-                ()->
-                    scanVillage(
-                        e.getWorld(),
-                        probe
-                    ),
-                40L
-            );
+                .getScheduler()
+                .runTaskLater(
+                        plugin,
+                        () -> scanVillage(
+                                e.getWorld(),
+                                probe
+                        ),
+                        40L
+                );
     }
 
-    public void tick(){
+    public void tick() {
 
-        if(
-            !plugin.getConfig()
-                .getBoolean(
-                    "railways.minecart-service.enabled",
-                    true
-                )
-        ){
+        if (!plugin.getConfig().getBoolean(
+                "railways.minecart-service.enabled",
+                true
+        )) {
             return;
         }
 
-        long interval=
-            plugin.getConfig().getLong(
-                "railways.minecart-service.interval-seconds",
-                120
-            )*
-            1000L;
+        long interval =
+                plugin.getConfig().getLong(
+                        "railways.minecart-service.interval-seconds",
+                        120
+                ) * 1000L;
 
-        if(
-            System.currentTimeMillis()%
-            interval<1000
-        ){
-            for(Station s:stations.values())
+        if (
+                System.currentTimeMillis()
+                        % interval < 1000
+        ) {
+            for (Station s : stations.values()) {
                 spawnCart(s);
+            }
         }
     }
 
     private void spawnCart(
-        Station s
-    ){
-        World w=
-            s.station().getWorld();
+            Station s
+    ) {
+        World w =
+                s.station().getWorld();
 
-        Location l=
-            s.station()
-                .clone()
-                .add(0,0,-1);
+        Location l =
+                s.station()
+                        .clone()
+                        .add(0, 0, -1);
 
-        Minecart c=
-            w.spawn(
-                l,
-                Minecart.class
-            );
+        Minecart c =
+                w.spawn(
+                        l,
+                        Minecart.class
+                );
 
         c.setMaxSpeed(0.6);
 
         c.setCustomName(
-            "Lorenbahn → "+
-            s.airportId()
+                "Lorenbahn → "
+                        + s.airportId()
         );
 
         c.setCustomNameVisible(true);
     }
 
-    @EventHandler(ignoreCancelled=true)
+    @EventHandler(ignoreCancelled = true)
     public void onInteract(
-        PlayerInteractEvent e
-    ){
-        if(
-            e.getHand()!=
-            EquipmentSlot.HAND ||
-            e.getAction().isLeftClick()
-        ){
+            PlayerInteractEvent e
+    ) {
+        if (
+                e.getHand()
+                        != EquipmentSlot.HAND
+        ) {
             return;
         }
 
-        if(
-            e.getClickedBlock()==null ||
-            e.getClickedBlock().getType()!=
-            Material.STONE_BUTTON
-        ){
+        if (e.getAction().isLeftClick()) {
             return;
         }
 
-        Location l=
-            e.getClickedBlock().getLocation();
+        if (
+                e.getClickedBlock() == null
+                        ||
+                e.getClickedBlock().getType()
+                        != Material.STONE_BUTTON
+        ) {
+            return;
+        }
 
-        for(Station s:stations.values()){
+        Location l =
+                e.getClickedBlock()
+                        .getLocation();
 
-            if(
-                s.station()
-                    .distanceSquared(l)<36
-            ){
+        for (Station s : stations.values()) {
+
+            if (
+                    s.station()
+                            .distanceSquared(l)
+                            < 36
+            ) {
+
                 spawnCart(s);
 
                 e.getPlayer().sendMessage(
-                    "§aLorenbahn fährt zum Flughafen."
+                        "§aLorenbahn fährt zum Flughafen."
                 );
 
                 break;
@@ -802,10 +833,11 @@ public final class StationManager {
     }
 
     public record Station(
-        String id,
-        String name,
-        String airportId,
-        Location station,
-        Location airportRail
-    ){}
+            String id,
+            String name,
+            String airportId,
+            Location station,
+            Location airportRail
+    ) {
+    }
 }
