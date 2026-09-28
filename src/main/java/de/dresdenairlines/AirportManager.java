@@ -1841,6 +1841,27 @@ public class AirportManager implements Listener {
 
         if (
                 site == null
+                /**
+     * Gibt alle vorhandenen Flughäfen zurück.
+     */
+    public Collection<Airport> all() {
+        return Collections.unmodifiableCollection(
+                airports.values()
+        );
+    }
+
+    /**
+     * Gibt einen Flughafen anhand seiner ID zurück.
+     */
+    public Airport get(String id) {
+        if (id == null) {
+            return null;
+        }
+
+        return airports.get(
+                id.toUpperCase(Locale.ROOT)
+        );
+    }
         ) {
 
             plugin.getLogger().warning(
