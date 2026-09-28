@@ -6,12 +6,25 @@ import org.bukkit.Location;
 
 import java.util.*;
 
-public final class Commands implements CommandExecutor {
+public final class Commands implements TabExecutor {
 
     final DresdenAirlines p;
 
     Commands(DresdenAirlines p) {
         this.p = p;
+
+        // TAB-Vervollständigung für alle DresdenAirlines-Befehle
+        if (p.getCommand("flight") != null) {
+            p.getCommand("flight").setTabCompleter(this);
+        }
+
+        if (p.getCommand("airline") != null) {
+            p.getCommand("airline").setTabCompleter(this);
+        }
+
+        if (p.getCommand("airport") != null) {
+            p.getCommand("airport").setTabCompleter(this);
+        }
     }
 
     @Override
@@ -27,7 +40,9 @@ public final class Commands implements CommandExecutor {
         }
 
         /*
+         * =========================================================
          * /flight
+         * =========================================================
          */
         if (c.getName().equalsIgnoreCase("flight")) {
 
@@ -37,12 +52,14 @@ public final class Commands implements CommandExecutor {
             }
 
             if (a[0].equalsIgnoreCase("money")) {
+
                 pl.sendMessage(
                         "§6Kontostand: §f"
                                 + p.passengers.money(
                                         pl.getUniqueId()
                                 )
                 );
+
                 return true;
             }
 
@@ -86,9 +103,11 @@ public final class Commands implements CommandExecutor {
                             t == null
                                     || amount <= 0
                     ) {
+
                         pl.sendMessage(
                                 "§cSpieler oder Betrag ungültig."
                         );
+
                         return true;
                     }
 
@@ -143,9 +162,11 @@ public final class Commands implements CommandExecutor {
                             t == null
                                     || amount <= 0
                     ) {
+
                         pl.sendMessage(
                                 "§cSpieler oder Betrag ungültig."
                         );
+
                         return true;
                     }
 
@@ -166,6 +187,7 @@ public final class Commands implements CommandExecutor {
                     );
 
                     if (ok) {
+
                         t.sendMessage(
                                 "§cDir wurden "
                                         + amount
@@ -194,11 +216,14 @@ public final class Commands implements CommandExecutor {
         }
 
         /*
+         * =========================================================
          * /airline
+         * =========================================================
          */
         if (c.getName().equalsIgnoreCase("airline")) {
 
             if (a.length == 0) {
+
                 p.airlineGUI.open(pl);
                 return true;
             }
@@ -210,19 +235,26 @@ public final class Commands implements CommandExecutor {
 
             switch (a[0].toLowerCase()) {
 
+                /*
+                 * /airline create
+                 */
                 case "create" -> {
 
                     if (a.length < 2) {
+
                         pl.sendMessage(
                                 "§c/airline create <Name> [Code]"
                         );
+
                         return true;
                     }
 
                     if (al != null) {
+
                         pl.sendMessage(
                                 "§cDu hast bereits eine Airline."
                         );
+
                         return true;
                     }
 
@@ -232,9 +264,11 @@ public final class Commands implements CommandExecutor {
                                     : "AIR";
 
                     if (code.length() > 4) {
+
                         pl.sendMessage(
                                 "§cCode max. 4 Zeichen."
                         );
+
                         return true;
                     }
 
@@ -263,19 +297,26 @@ public final class Commands implements CommandExecutor {
                     p.airlineGUI.open(pl);
                 }
 
+                /*
+                 * /airline buy
+                 */
                 case "buy" -> {
 
                     if (al == null) {
+
                         pl.sendMessage(
                                 "§cErstelle zuerst eine Airline."
                         );
+
                         return true;
                     }
 
                     if (a.length < 2) {
+
                         pl.sendMessage(
                                 "§cTypen: A220-300, A320, A330-300, A350-900, ERJ195"
                         );
+
                         return true;
                     }
 
@@ -297,15 +338,20 @@ public final class Commands implements CommandExecutor {
                     );
                 }
 
+                /*
+                 * /airline route
+                 */
                 case "route" -> {
 
                     if (
                             al == null
                                     || a.length < 5
                     ) {
+
                         pl.sendMessage(
                                 "§c/airline route <von> <nach> <Flugzeug-ID> <Preis>"
                         );
+
                         return true;
                     }
 
@@ -335,16 +381,38 @@ public final class Commands implements CommandExecutor {
                     }
                 }
 
+                /*
+                 * /airline fleet
+                 */
                 case "fleet" -> {
 
                     if (al == null) {
+
                         pl.sendMessage(
                                 "§cKeine Airline."
                         );
+
                         return true;
                     }
 
+                    if (al.fleet.isEmpty()) {
+
+                        pl.sendMessage(
+                                "§eDeine Flotte ist noch leer."
+                        );
+
+                        return true;
+                    }
+
+                    pl.sendMessage(
+                            "§b═══ Deine Flotte ═══"
+                    );
+
                     for (Aircraft x : al.fleet) {
+
+                        if (x == null) {
+                            continue;
+                        }
 
                         pl.sendMessage(
                                 "§b"
@@ -360,14 +428,32 @@ public final class Commands implements CommandExecutor {
                     }
                 }
 
+                /*
+                 * /airline routes
+                 */
                 case "routes" -> {
 
                     if (al == null) {
+
                         pl.sendMessage(
                                 "§cKeine Airline."
                         );
+
                         return true;
                     }
+
+                    if (al.routes.isEmpty()) {
+
+                        pl.sendMessage(
+                                "§eDeine Airline hat noch keine Routen."
+                        );
+
+                        return true;
+                    }
+
+                    pl.sendMessage(
+                            "§e═══ Deine Routen ═══"
+                    );
 
                     for (Route r : al.routes) {
 
@@ -384,18 +470,22 @@ public final class Commands implements CommandExecutor {
                     }
                 }
 
+                /*
+                 * /airline info
+                 */
                 case "info" -> {
 
                     if (al == null) {
+
                         pl.sendMessage(
                                 "§cKeine Airline."
                         );
+
                         return true;
                     }
 
                     /*
-                     * WICHTIG:
-                     * final Kopie für die Lambdas.
+                     * Finale Kopie für die Lambdas.
                      */
                     final Airline currentAirline = al;
 
@@ -450,6 +540,9 @@ public final class Commands implements CommandExecutor {
                     );
                 }
 
+                /*
+                 * /airline ranking
+                 */
                 case "ranking" -> {
 
                     List<Airline> list =
@@ -505,24 +598,61 @@ public final class Commands implements CommandExecutor {
         }
 
         /*
+         * =========================================================
          * /airport
+         * =========================================================
          */
+
+        if (!c.getName().equalsIgnoreCase("airport")) {
+            return true;
+        }
 
         if (a.length == 0) {
 
             pl.sendMessage(
-                    "§b/airport list | locate [ID/Name] | info | generate | stations"
+                    "§b/airport list"
+                            + " §7| §b/airport locate [ID/Name]"
+                            + " §7| §b/airport info"
+                            + " §7| §b/airport generate"
+                            + " §7| §b/airport stations"
             );
 
             return true;
         }
 
+        /*
+         * /airport stations
+         */
         if (a[0].equalsIgnoreCase("stations")) {
+
+            if (
+                    p.stations == null
+                            || p.stations.stations == null
+                            || p.stations.stations.isEmpty()
+            ) {
+
+                pl.sendMessage(
+                        "§eEs wurden noch keine Stationen gefunden."
+                );
+
+                return true;
+            }
+
+            pl.sendMessage(
+                    "§b═══ Flughafen-Stationen ═══"
+            );
 
             for (
                     StationManager.Station st :
                     p.stations.stations.values()
             ) {
+
+                if (
+                        st == null
+                                || st.station() == null
+                ) {
+                    continue;
+                }
 
                 pl.sendMessage(
                         "§b"
@@ -538,36 +668,96 @@ public final class Commands implements CommandExecutor {
                                 + "]"
                 );
             }
+
+            return true;
         }
 
-        else if (
-                a[0].equalsIgnoreCase("list")
-        ) {
+        /*
+         * /airport list
+         */
+        if (a[0].equalsIgnoreCase("list")) {
 
-            for (
-                    Airport x :
-                    p.airports.airports.values()
-            ) {
+            try {
+
+                if (
+                        p.airports == null
+                                || p.airports.airports == null
+                                || p.airports.airports.isEmpty()
+                ) {
+
+                    pl.sendMessage(
+                            "§eEs sind noch keine Flughäfen registriert."
+                    );
+
+                    return true;
+                }
 
                 pl.sendMessage(
-                        "§e"
-                                + x.id()
-                                + " §7- "
-                                + x.name()
-                                + " §8["
-                                + x.center().getBlockX()
-                                + ", "
-                                + x.center().getBlockY()
-                                + ", "
-                                + x.center().getBlockZ()
-                                + "]"
+                        "§b═══ Flughäfen ═══"
                 );
+
+                int count = 0;
+
+                for (
+                        Airport x :
+                        p.airports.airports.values()
+                ) {
+
+                    if (
+                            x == null
+                                    || x.center() == null
+                    ) {
+                        continue;
+                    }
+
+                    Location center =
+                            x.center();
+
+                    pl.sendMessage(
+                            "§e"
+                                    + x.id()
+                                    + " §7- "
+                                    + x.name()
+                                    + " §8["
+                                    + center.getBlockX()
+                                    + ", "
+                                    + center.getBlockY()
+                                    + ", "
+                                    + center.getBlockZ()
+                                    + "]"
+                    );
+
+                    count++;
+                }
+
+                if (count == 0) {
+
+                    pl.sendMessage(
+                            "§eEs wurden keine gültigen Flughäfen gefunden."
+                    );
+                }
+
+            } catch (Exception ex) {
+
+                pl.sendMessage(
+                        "§cDie Flughafenliste konnte nicht geladen werden."
+                );
+
+                p.getLogger().warning(
+                        "Fehler bei /airport list: "
+                                + ex.getMessage()
+                );
+
+                ex.printStackTrace();
             }
+
+            return true;
         }
 
-        else if (
-                a[0].equalsIgnoreCase("locate")
-        ) {
+        /*
+         * /airport locate
+         */
+        if (a[0].equalsIgnoreCase("locate")) {
 
             if (a.length == 1) {
 
@@ -577,8 +767,14 @@ public final class Commands implements CommandExecutor {
                         );
 
                 if (x != null) {
-                    sendLocate(pl, x);
+
+                    sendLocate(
+                            pl,
+                            x
+                    );
+
                 } else {
+
                     pl.sendMessage(
                             "§cKein Flughafen gefunden."
                     );
@@ -620,11 +816,14 @@ public final class Commands implements CommandExecutor {
                     }
                 }
             }
+
+            return true;
         }
 
-        else if (
-                a[0].equalsIgnoreCase("info")
-        ) {
+        /*
+         * /airport info
+         */
+        if (a[0].equalsIgnoreCase("info")) {
 
             Airport x =
                     p.airports.nearest(
@@ -641,10 +840,21 @@ public final class Commands implements CommandExecutor {
                         "§7Gates: §f"
                                 + x.gates().size()
                 );
+
+            } else {
+
+                pl.sendMessage(
+                        "§cKein Flughafen in der Nähe gefunden."
+                );
             }
+
+            return true;
         }
 
-        else if (
+        /*
+         * /airport generate
+         */
+        if (
                 a[0].equalsIgnoreCase("generate")
                         && pl.hasPermission(
                                 "dresdenairlines.admin"
@@ -658,11 +868,379 @@ public final class Commands implements CommandExecutor {
             pl.sendMessage(
                     "§aRegion geprüft."
             );
+
+            return true;
         }
+
+        /*
+         * Unbekannter /airport-Befehl
+         */
+        pl.sendMessage(
+                "§cUnbekannter Befehl."
+        );
+
+        pl.sendMessage(
+                "§7Möglichkeiten: §f"
+                        + "list, locate, info, generate, stations"
+        );
 
         return true;
     }
 
+    /*
+     * =========================================================
+     * TAB COMPLETION
+     * =========================================================
+     */
+    @Override
+    public List<String> onTabComplete(
+            CommandSender sender,
+            Command command,
+            String alias,
+            String[] args
+    ) {
+
+        if (!(sender instanceof Player player)) {
+            return Collections.emptyList();
+        }
+
+        String name =
+                command.getName().toLowerCase();
+
+        /*
+         * ---------------------------------------------------------
+         * /airline
+         * ---------------------------------------------------------
+         */
+        if (name.equals("airline")) {
+
+            if (args.length == 1) {
+
+                return partial(
+                        args[0],
+                        "create",
+                        "buy",
+                        "route",
+                        "fleet",
+                        "routes",
+                        "info",
+                        "ranking"
+                );
+            }
+
+            /*
+             * /airline buy <Typ>
+             */
+            if (
+                    args.length == 2
+                            && args[0].equalsIgnoreCase("buy")
+            ) {
+
+                return partial(
+                        args[1],
+                        "A220-300",
+                        "A320",
+                        "A330-300",
+                        "A350-900",
+                        "ERJ195"
+                );
+            }
+
+            /*
+             * /airline route <Von>
+             */
+            if (
+                    args.length == 2
+                            && args[0].equalsIgnoreCase("route")
+            ) {
+
+                List<String> ids =
+                        new ArrayList<>();
+
+                for (
+                        Airport airport :
+                        p.airports.airports.values()
+                ) {
+
+                    if (
+                            airport != null
+                                    && airport.id() != null
+                    ) {
+
+                        ids.add(
+                                airport.id()
+                        );
+                    }
+                }
+
+                return partial(
+                        args[1],
+                        ids.toArray(
+                                new String[0]
+                        )
+                );
+            }
+
+            /*
+             * /airline route <Von> <Nach>
+             */
+            if (
+                    args.length == 3
+                            && args[0].equalsIgnoreCase("route")
+            ) {
+
+                List<String> ids =
+                        new ArrayList<>();
+
+                for (
+                        Airport airport :
+                        p.airports.airports.values()
+                ) {
+
+                    if (
+                            airport != null
+                                    && airport.id() != null
+                    ) {
+
+                        ids.add(
+                                airport.id()
+                        );
+                    }
+                }
+
+                return partial(
+                        args[2],
+                        ids.toArray(
+                                new String[0]
+                        )
+                );
+            }
+
+            /*
+             * /airline route <Von> <Nach> <Flugzeug-ID>
+             */
+            if (
+                    args.length == 4
+                            && args[0].equalsIgnoreCase("route")
+            ) {
+
+                List<String> ids =
+                        new ArrayList<>();
+
+                Airline al =
+                        p.storage.airlines.get(
+                                player.getUniqueId()
+                        );
+
+                if (al != null) {
+
+                    for (
+                            Aircraft ac :
+                            al.fleet
+                    ) {
+
+                        if (
+                                ac != null
+                                        && ac.id != null
+                        ) {
+
+                            ids.add(
+                                    ac.id
+                            );
+                        }
+                    }
+                }
+
+                return partial(
+                        args[3],
+                        ids.toArray(
+                                new String[0]
+                        )
+                );
+            }
+
+            /*
+             * /airline route <Von> <Nach> <Flugzeug-ID> <Preis>
+             */
+            if (
+                    args.length == 5
+                            && args[0].equalsIgnoreCase("route")
+            ) {
+
+                return Collections.emptyList();
+            }
+
+            return Collections.emptyList();
+        }
+
+        /*
+         * ---------------------------------------------------------
+         * /airport
+         * ---------------------------------------------------------
+         */
+        if (name.equals("airport")) {
+
+            if (args.length == 1) {
+
+                return partial(
+                        args[0],
+                        "list",
+                        "locate",
+                        "info",
+                        "generate",
+                        "stations"
+                );
+            }
+
+            /*
+             * /airport locate <Name/ID>
+             * /airport info <Name/ID>
+             */
+            if (
+                    args.length >= 2
+                            && (
+                            args[0].equalsIgnoreCase("locate")
+                                    || args[0].equalsIgnoreCase("info")
+                    )
+            ) {
+
+                List<String> ids =
+                        new ArrayList<>();
+
+                for (
+                        Airport airport :
+                        p.airports.airports.values()
+                ) {
+
+                    if (airport != null) {
+
+                        if (
+                                airport.id() != null
+                        ) {
+
+                            ids.add(
+                                    airport.id()
+                            );
+                        }
+
+                        if (
+                                airport.name() != null
+                        ) {
+
+                            ids.add(
+                                    airport.name()
+                            );
+                        }
+                    }
+                }
+
+                return partial(
+                        args[args.length - 1],
+                        ids.toArray(
+                                new String[0]
+                        )
+                );
+            }
+
+            return Collections.emptyList();
+        }
+
+        /*
+         * ---------------------------------------------------------
+         * /flight
+         * ---------------------------------------------------------
+         */
+        if (name.equals("flight")) {
+
+            if (args.length == 1) {
+
+                return partial(
+                        args[0],
+                        "book",
+                        "money",
+                        "give",
+                        "take"
+                );
+            }
+
+            /*
+             * /flight book <Ziel>
+             */
+            if (
+                    args.length == 2
+                            && args[0].equalsIgnoreCase("book")
+            ) {
+
+                List<String> ids =
+                        new ArrayList<>();
+
+                for (
+                        Airport airport :
+                        p.airports.airports.values()
+                ) {
+
+                    if (
+                            airport != null
+                                    && airport.id() != null
+                    ) {
+
+                        ids.add(
+                                airport.id()
+                        );
+                    }
+                }
+
+                return partial(
+                        args[1],
+                        ids.toArray(
+                                new String[0]
+                        )
+                );
+            }
+        }
+
+        return Collections.emptyList();
+    }
+
+    /*
+     * =========================================================
+     * TAB-HILFSMETHODE
+     * =========================================================
+     */
+    private List<String> partial(
+            String input,
+            String... values
+    ) {
+
+        List<String> result =
+                new ArrayList<>();
+
+        String lower =
+                input == null
+                        ? ""
+                        : input.toLowerCase();
+
+        for (String value : values) {
+
+            if (
+                    value != null
+                            && value
+                            .toLowerCase()
+                            .startsWith(lower)
+            ) {
+
+                result.add(value);
+            }
+        }
+
+        return result;
+    }
+
+    /*
+     * =========================================================
+     * /airport locate Ausgabe
+     * =========================================================
+     */
     private void sendLocate(
             Player pl,
             Airport x
