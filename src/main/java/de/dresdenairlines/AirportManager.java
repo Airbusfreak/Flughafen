@@ -2,7 +2,8 @@ package de.dresdenairlines;
 
 import org.bukkit.*;
 import org.bukkit.block.Biome;
-import org.bukkit.event.*;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.StructureType;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -14,31 +15,33 @@ public class AirportManager implements Listener {
 
     private final DresdenAirlines plugin;
 
-    public final Map<String, Airport> airports = new LinkedHashMap<>();
+    public final Map<String, Airport> airports =
+            new LinkedHashMap<>();
 
-    private final Set<String> villageChecks = new HashSet<>();
-    private final Random random = new Random(41231);
+    private final Set<String> villageChecks =
+            new HashSet<>();
 
     private final File file;
+
     private YamlConfiguration data;
 
-    AirportManager(DresdenAirlines p) {
-        plugin = p;
+    public AirportManager(DresdenAirlines plugin) {
 
-        file = new File(
-                p.getDataFolder(),
+        this.plugin = plugin;
+
+        this.file = new File(
+                plugin.getDataFolder(),
                 "airports.yml"
         );
 
-        data = YamlConfiguration.loadConfiguration(file);
+        this.data =
+                YamlConfiguration.loadConfiguration(file);
     }
 
-    /**
-     * Lädt alle gespeicherten Flughäfen.
-     *
-     * Die bereits gebauten Flughäfen werden nicht erneut gebaut.
-     * Es werden nur Position, Name, Gates usw. aus airports.yml geladen.
-     */
+    // =========================================================
+    // LADEN
+    // =========================================================
+
     public void load() {
 
         airports.clear();
@@ -47,55 +50,77 @@ public class AirportManager implements Listener {
             return;
         }
 
-        data = YamlConfiguration.loadConfiguration(file);
+        data =
+                YamlConfiguration.loadConfiguration(file);
 
         for (String id : data.getKeys(false)) {
 
             try {
 
                 String worldName =
-                        data.getString(id + ".world");
+                        data.getString(
+                                id + ".world"
+                        );
 
                 String worldUuid =
-                        data.getString(id + ".world-uuid");
+                        data.getString(
+                                id + ".world-uuid"
+                        );
 
-                World w = null;
+                World world = null;
 
                 if (worldUuid != null) {
 
                     try {
 
-                        w = Bukkit.getWorld(
-                                UUID.fromString(worldUuid)
-                        );
+                        world =
+                                Bukkit.getWorld(
+                                        UUID.fromString(worldUuid)
+                                );
 
                     } catch (IllegalArgumentException ignored) {
                     }
                 }
 
-                if (w == null && worldName != null) {
-                    w = Bukkit.getWorld(worldName);
+                if (
+                        world == null
+                                &&
+                        worldName != null
+                ) {
+
+                    world =
+                            Bukkit.getWorld(
+                                    worldName
+                            );
                 }
 
-                if (w == null) {
+                if (world == null) {
 
                     plugin.getLogger().warning(
-                            "Airport " + id +
-                                    " could not be loaded: world is not available (" +
-                                    worldName + ")."
+                            "Airport " +
+                                    id +
+                                    " konnte nicht geladen werden. " +
+                                    "Welt nicht gefunden: " +
+                                    worldName
                     );
 
                     continue;
                 }
 
                 double x =
-                        data.getDouble(id + ".x");
+                        data.getDouble(
+                                id + ".x"
+                        );
 
                 double y =
-                        data.getDouble(id + ".y");
+                        data.getDouble(
+                                id + ".y"
+                        );
 
                 double z =
-                        data.getDouble(id + ".z");
+                        data.getDouble(
+                                id + ".z"
+                        );
 
                 int size =
                         data.getInt(
@@ -114,43 +139,52 @@ public class AirportManager implements Listener {
 
                     for (
                             int i = 1;
-                            i <= Math.max(3, size / 15);
+                            i <= Math.max(
+                                    3,
+                                    size / 15
+                            );
                             i++
                     ) {
 
-                        gates.add("G" + i);
+                        gates.add(
+                                "G" + i
+                        );
                     }
                 }
 
-                Airport a = new Airport(
-                        id,
-                        data.getString(
-                                id + ".name",
-                                id
-                        ),
-                        new Location(
-                                w,
-                                x,
-                                y,
-                                z
-                        ),
-                        size,
-                        gates
-                );
+                Airport airport =
+                        new Airport(
+                                id,
+                                data.getString(
+                                        id + ".name",
+                                        id
+                                ),
+                                new Location(
+                                        world,
+                                        x,
+                                        y,
+                                        z
+                                ),
+                                size,
+                                gates
+                        );
 
-                a.level(
+                airport.level(
                         data.getInt(
                                 id + ".level",
                                 1
                         )
                 );
 
-                airports.put(id, a);
+                airports.put(
+                        id.toUpperCase(Locale.ROOT),
+                        airport
+                );
 
             } catch (Exception ex) {
 
                 plugin.getLogger().warning(
-                        "Could not load airport " +
+                        "Fehler beim Laden des Flughafens " +
                                 id +
                                 ": " +
                                 ex.getMessage()
@@ -161,86 +195,98 @@ public class AirportManager implements Listener {
         plugin.getLogger().info(
                 "Loaded " +
                         airports.size() +
-                        " persistent airports."
+                        " airports."
         );
     }
 
-    /**
-     * Speichert alle Flughäfen in airports.yml.
-     */
+    // =========================================================
+    // SPEICHERN
+    // =========================================================
+
     public void save() {
 
-        YamlConfiguration y =
+        YamlConfiguration yaml =
                 new YamlConfiguration();
 
-        for (Airport a : airports.values()) {
+        for (Airport airport : airports.values()) {
 
-            String k = a.id();
+            if (
+                    airport == null
+                            ||
+                    airport.center() == null
+                            ||
+                    airport.center().getWorld() == null
+            ) {
+                continue;
+            }
 
-            World w =
-                    a.center().getWorld();
+            String key =
+                    airport.id();
 
-            y.set(
-                    k + ".name",
-                    a.name()
+            World world =
+                    airport.center().getWorld();
+
+            yaml.set(
+                    key + ".name",
+                    airport.name()
             );
 
-            y.set(
-                    k + ".world",
-                    w.getName()
+            yaml.set(
+                    key + ".world",
+                    world.getName()
             );
 
-            y.set(
-                    k + ".world-uuid",
-                    w.getUID().toString()
+            yaml.set(
+                    key + ".world-uuid",
+                    world.getUID().toString()
             );
 
-            y.set(
-                    k + ".x",
-                    a.center().getX()
+            yaml.set(
+                    key + ".x",
+                    airport.center().getX()
             );
 
-            y.set(
-                    k + ".y",
-                    a.center().getY()
+            yaml.set(
+                    key + ".y",
+                    airport.center().getY()
             );
 
-            y.set(
-                    k + ".z",
-                    a.center().getZ()
+            yaml.set(
+                    key + ".z",
+                    airport.center().getZ()
             );
 
-            y.set(
-                    k + ".size",
-                    a.size()
+            yaml.set(
+                    key + ".size",
+                    airport.size()
             );
 
-            y.set(
-                    k + ".gates",
-                    a.gates()
+            yaml.set(
+                    key + ".gates",
+                    airport.gates()
             );
 
-            y.set(
-                    k + ".level",
-                    a.level()
+            yaml.set(
+                    key + ".level",
+                    airport.level()
             );
 
-            y.set(
-                    k + ".generated",
+            yaml.set(
+                    key + ".generated",
                     true
             );
 
-            y.set(
-                    k + ".build-version",
+            yaml.set(
+                    key + ".build-version",
                     1
             );
         }
 
         try {
 
-            y.save(file);
+            yaml.save(file);
 
-            data = y;
+            data = yaml;
 
         } catch (Exception ex) {
 
@@ -251,34 +297,63 @@ public class AirportManager implements Listener {
         }
     }
 
-    /**
-     * Erstellt die vier Startflughäfen.
-     */
+    // =========================================================
+    // ALLE FLUGHÄFEN
+    // =========================================================
+
+    public Collection<Airport> all() {
+
+        return Collections.unmodifiableCollection(
+                airports.values()
+        );
+    }
+
+    // =========================================================
+    // FLUGHAFEN NACH ID
+    // =========================================================
+
+    public Airport get(String id) {
+
+        if (id == null) {
+            return null;
+        }
+
+        return airports.get(
+                id.toUpperCase(Locale.ROOT)
+        );
+    }
+
+    // =========================================================
+    // START-FLUGHÄFEN
+    // =========================================================
+
     public void createInitial() {
 
         if (!airports.isEmpty()) {
             return;
         }
 
-        World w =
+        World world =
                 Bukkit.getWorlds()
                         .stream()
-                        .filter(this::worldAllowed)
+                        .filter(
+                                this::worldAllowed
+                        )
                         .findFirst()
                         .orElse(null);
 
-        if (w == null) {
+        if (world == null) {
 
             plugin.getLogger().warning(
-                    "No allowed world found for automatic airport generation. " +
-                            "Check airports.allowed-worlds in config.yml."
+                    "Keine erlaubte Welt für die " +
+                            "Flughafengenerierung gefunden."
             );
 
             return;
         }
 
         createInitialAirport(
-                w,
+                world,
                 "DRE",
                 "Dresden International",
                 0,
@@ -287,7 +362,7 @@ public class AirportManager implements Listener {
         );
 
         createInitialAirport(
-                w,
+                world,
                 "LEJ",
                 "Leipzig Regional",
                 2600,
@@ -296,7 +371,7 @@ public class AirportManager implements Listener {
         );
 
         createInitialAirport(
-                w,
+                world,
                 "BER",
                 "Berlin International",
                 -2800,
@@ -305,7 +380,7 @@ public class AirportManager implements Listener {
         );
 
         createInitialAirport(
-                w,
+                world,
                 "MUC",
                 "Munich International",
                 4200,
@@ -316,11 +391,8 @@ public class AirportManager implements Listener {
         save();
     }
 
-    /**
-     * Erstellt einen Startflughafen.
-     */
     private void createInitialAirport(
-            World w,
+            World world,
             String id,
             String name,
             int x,
@@ -328,30 +400,22 @@ public class AirportManager implements Listener {
             int size
     ) {
 
-        if (airports.containsKey(id)) {
-            return;
-        }
-
         Location site =
                 bestSite(
-                        w,
+                        world,
                         x,
                         z,
                         size
                 );
 
-        /*
-         * Terralith oder stark hügeliges Gelände:
-         * zweiter Versuch mit größerem Suchradius.
-         */
         if (site == null) {
 
             site =
                     bestSite(
-                            w,
+                            world,
                             x,
                             z,
-                            Math.max(size, 35),
+                            size,
                             512
                     );
         }
@@ -359,13 +423,9 @@ public class AirportManager implements Listener {
         if (site == null) {
 
             plugin.getLogger().warning(
-                    "Could not find a suitable site for airport " +
+                    "Kein geeigneter Bauplatz für " +
                             id +
-                            " near " +
-                            x +
-                            "," +
-                            z +
-                            "."
+                            " gefunden."
             );
 
             return;
@@ -379,23 +439,43 @@ public class AirportManager implements Listener {
         );
     }
 
-    /**
-     * Erstellt einen Flughafen und baut ihn direkt in die Welt.
-     */
+    // =========================================================
+    // FLUGHAFEN ERSTELLEN
+    // =========================================================
+
     public Airport createAirport(
             String id,
             String name,
-            Location c,
+            Location center,
             int size
     ) {
+
+        if (
+                center == null
+                        ||
+                center.getWorld() == null
+        ) {
+
+            plugin.getLogger().warning(
+                    "Airport " +
+                            id +
+                            " konnte nicht erstellt werden: " +
+                            "ungültige Position."
+            );
+
+            return null;
+        }
 
         id =
                 id.toUpperCase(
                         Locale.ROOT
                 );
 
-        if (airports.containsKey(id)) {
-            return airports.get(id);
+        Airport existing =
+                airports.get(id);
+
+        if (existing != null) {
+            return existing;
         }
 
         List<String> gates =
@@ -403,7 +483,10 @@ public class AirportManager implements Listener {
 
         for (
                 int i = 1;
-                i <= Math.max(3, size / 15);
+                i <= Math.max(
+                        3,
+                        size / 15
+                );
                 i++
         ) {
 
@@ -412,45 +495,47 @@ public class AirportManager implements Listener {
             );
         }
 
-        Airport a =
+        Airport airport =
                 new Airport(
                         id,
                         name,
-                        c,
+                        center,
                         size,
                         gates
                 );
 
         airports.put(
                 id,
-                a
+                airport
         );
 
-        build(a);
+        build(
+                airport
+        );
 
         save();
 
-        return a;
+        return airport;
     }
 
-    /**
-     * Setzt einen Block.
-     */
+    // =========================================================
+    // BLOCK-HILFSMETHODEN
+    // =========================================================
+
     private void set(
-            Location l,
-            Material m
+            Location location,
+            Material material
     ) {
 
-        l.getBlock().setType(m);
+        location.getBlock().setType(
+                material
+        );
     }
 
-    /**
-     * Füllt einen Bereich mit einem Block.
-     */
     private void fill(
             Location a,
             Location b,
-            Material m
+            Material material
     ) {
 
         int minX =
@@ -514,80 +599,78 @@ public class AirportManager implements Listener {
                                     y,
                                     z
                             ),
-                            m
+                            material
                     );
                 }
             }
         }
     }
 
-    /**
-     * Baut den kompletten Flughafen.
-     */
-    private void build(Airport a) {
+    // =========================================================
+    // FLUGHAFEN BAUEN
+    // =========================================================
 
-        Location c =
-                a.center();
+    private void build(
+            Airport airport
+    ) {
+
+        Location center =
+                airport.center();
+
+        World world =
+                center.getWorld();
 
         int y =
-                c.getBlockY();
+                center.getBlockY();
 
-        World w =
-                c.getWorld();
+        int size =
+                airport.size();
 
-        int s =
-                a.size();
+        int x =
+                center.getBlockX();
 
-        /*
-         * Untergrund angleichen.
-         */
-        int padRadius =
-                s + 20;
+        int z =
+                center.getBlockZ();
+
+        // -----------------------------------------------------
+        // Gelände vorbereiten
+        // -----------------------------------------------------
+
+        int radius =
+                size + 20;
 
         for (
-                int x =
-                        c.getBlockX() -
-                                padRadius;
-
-                x <=
-                        c.getBlockX() +
-                                padRadius;
-
-                x += 2
+                int px = x - radius;
+                px <= x + radius;
+                px += 2
         ) {
 
             for (
-                    int z =
-                            c.getBlockZ() -
-                                    padRadius;
-
-                    z <=
-                            c.getBlockZ() +
-                                    padRadius;
-
-                    z += 2
+                    int pz = z - radius;
+                    pz <= z + radius;
+                    pz += 2
             ) {
 
                 int top =
-                        w.getHighestBlockYAt(
-                                x,
-                                z
+                        world.getHighestBlockYAt(
+                                px,
+                                pz
                         );
 
                 if (top < y) {
 
                     fill(
                             new Location(
-                                    w,
-                                    x,
+                                    world,
+                                    px,
                                     top + 1,
-                                    z
+                                    pz
                             ),
                             new Location(
-                                    w,
-                                    x,
+                                    world,
+                                    px,
                                     y - 1,
-                                    z
+                                    pz
                             ),
                             Material.STONE
                     );
@@ -595,34 +678,30 @@ public class AirportManager implements Listener {
             }
         }
 
-        /*
-         * Vorfeld.
-         */
-        int apronDepth =
-                Math.max(
-                        45,
-                        s
-                );
+        // -----------------------------------------------------
+        // Vorfeld
+        // -----------------------------------------------------
 
         fill(
                 new Location(
-                        w,
-                        c.getBlockX() - s,
+                        world,
+                        x - size,
                         y,
-                        c.getBlockZ() - s / 3
+                        z - size / 3
                 ),
                 new Location(
-                        w,
-                        c.getBlockX() + s,
+                        world,
+                        x + size,
                         y,
-                        c.getBlockZ() + s / 3
+                        z + size / 3
                 ),
                 Material.POLISHED_ANDESITE
         );
 
-        /*
-         * Start- und Landebahn.
-         */
+        // -----------------------------------------------------
+        // Runway
+        // -----------------------------------------------------
+
         int runwayHalf =
                 Math.max(
                         90,
@@ -633,315 +712,312 @@ public class AirportManager implements Listener {
                                 ) / 2
                 );
 
-        int rz =
-                c.getBlockZ() -
-                        s -
-                        35;
+        int runwayZ =
+                z - size - 35;
 
         fill(
                 new Location(
-                        w,
-                        c.getBlockX() - 7,
+                        world,
+                        x - 7,
                         y,
-                        rz - runwayHalf
+                        runwayZ - runwayHalf
                 ),
                 new Location(
-                        w,
-                        c.getBlockX() + 7,
+                        world,
+                        x + 7,
                         y,
-                        rz + runwayHalf
+                        runwayZ + runwayHalf
                 ),
                 Material.BLACK_CONCRETE
         );
 
-        /*
-         * Weiße Mittellinie.
-         */
+        // Runway-Mittelmarkierungen
+
         for (
-                int z =
-                        rz - runwayHalf + 10;
+                int pz =
+                        runwayZ -
+                                runwayHalf +
+                                10;
 
-                z <
-                        rz + runwayHalf - 10;
+                pz <
+                        runwayZ +
+                                runwayHalf -
+                                10;
 
-                z += 12
+                pz += 12
         ) {
 
             fill(
                     new Location(
-                            w,
-                            c.getBlockX() - 1,
+                            world,
+                            x - 1,
                             y + 1,
-                            z
+                            pz
                     ),
                     new Location(
-                            w,
-                            c.getBlockX() + 1,
+                            world,
+                            x + 1,
                             y + 1,
-                            z + 5
+                            pz + 5
                     ),
                     Material.WHITE_CONCRETE
             );
         }
 
-        /*
-         * Taxiway.
-         */
+        // -----------------------------------------------------
+        // Taxiway
+        // -----------------------------------------------------
+
         fill(
                 new Location(
-                        w,
-                        c.getBlockX() - 4,
+                        world,
+                        x - 4,
                         y,
-                        c.getBlockZ() - s
+                        z - size
                 ),
                 new Location(
-                        w,
-                        c.getBlockX() + 4,
+                        world,
+                        x + 4,
                         y,
-                        rz
+                        runwayZ
                 ),
                 Material.GRAY_CONCRETE
         );
 
-        /*
-         * Taxiway-Beleuchtung.
-         */
+        // Taxiway-Lichter
+
         for (
-                int x =
-                        c.getBlockX() - s;
-
-                x <=
-                        c.getBlockX() + s;
-
-                x += 8
+                int px = x - size;
+                px <= x + size;
+                px += 8
         ) {
 
             set(
                     new Location(
-                            w,
-                            x,
+                            world,
+                            px,
                             y + 1,
-                            c.getBlockZ()
+                            z
                     ),
                     Material.SEA_LANTERN
             );
         }
 
-        /*
-         * Terminal.
-         */
-        int tw =
+        // -----------------------------------------------------
+        // Terminal
+        // -----------------------------------------------------
+
+        int terminalWidth =
                 plugin.getConfig()
                         .getInt(
                                 "airports.terminal-width",
                                 55
                         );
 
-        int td =
+        int terminalDepth =
                 plugin.getConfig()
                         .getInt(
                                 "airports.terminal-depth",
                                 35
                         );
 
-        int tz =
-                c.getBlockZ() +
-                        18;
+        int terminalZ =
+                z + 18;
 
         fill(
                 new Location(
-                        w,
-                        c.getBlockX() - tw / 2,
+                        world,
+                        x - terminalWidth / 2,
                         y,
-                        tz
+                        terminalZ
                 ),
                 new Location(
-                        w,
-                        c.getBlockX() + tw / 2,
+                        world,
+                        x + terminalWidth / 2,
                         y + 1,
-                        tz + td
+                        terminalZ +
+                                terminalDepth
                 ),
                 Material.SMOOTH_QUARTZ
         );
 
-        /*
-         * Glasfront.
-         */
+        // Glasfront
+
         fill(
                 new Location(
-                        w,
-                        c.getBlockX() - tw / 2,
+                        world,
+                        x - terminalWidth / 2,
                         y + 2,
-                        tz
+                        terminalZ
                 ),
                 new Location(
-                        w,
-                        c.getBlockX() + tw / 2,
+                        world,
+                        x + terminalWidth / 2,
                         y + 2,
-                        tz
+                        terminalZ
                 ),
                 Material.GLASS
         );
 
-        fill(
-                new Location(
-                        w,
-                        c.getBlockX() - tw / 2 + 2,
-                        y + 2,
-                        tz + td - 1
-                ),
-                new Location(
-                        w,
-                        c.getBlockX() + tw / 2 - 2,
-                        y + 2,
-                        tz + td - 1
-                ),
-                Material.GLASS
-        );
-
-        /*
-         * Terminal-Innenraum:
-         * Check-in.
-         */
-        int mid =
-                c.getBlockX();
+        // -----------------------------------------------------
+        // Check-In
+        // -----------------------------------------------------
 
         for (
-                int x =
-                        mid - tw / 2 + 4;
+                int px =
+                        x -
+                                terminalWidth / 2 +
+                                4;
 
-                x <
-                        mid + tw / 2 - 3;
+                px <
+                        x +
+                                terminalWidth / 2 -
+                                3;
 
-                x += 5
+                px += 5
         ) {
 
             fill(
                     new Location(
-                            w,
-                            x,
+                            world,
+                            px,
                             y + 1,
-                            tz + 4
+                            terminalZ + 4
                     ),
                     new Location(
-                            w,
-                            x + 2,
+                            world,
+                            px + 2,
                             y + 2,
-                            tz + 5
+                            terminalZ + 5
                     ),
                     Material.SMOOTH_STONE
             );
 
             set(
                     new Location(
-                            w,
-                            x + 1,
+                            world,
+                            px + 1,
                             y + 3,
-                            tz + 4
+                            terminalZ + 4
                     ),
                     Material.LECTERN
             );
         }
 
-        /*
-         * Sitzplätze.
-         */
+        // -----------------------------------------------------
+        // Sitze
+        // -----------------------------------------------------
+
         for (
-                int x =
-                        mid - tw / 2 + 5;
+                int px =
+                        x -
+                                terminalWidth / 2 +
+                                5;
 
-                x <
-                        mid + tw / 2 - 4;
+                px <
+                        x +
+                                terminalWidth / 2 -
+                                4;
 
-                x += 7
+                px += 7
         ) {
 
-            fill(
+            set(
                     new Location(
-                            w,
-                            x,
+                            world,
+                            px,
                             y + 1,
-                            tz + 12
-                    ),
-                    new Location(
-                            w,
-                            x + 2,
-                            y + 1,
-                            tz + 14
+                            terminalZ + 12
                     ),
                     Material.OAK_PLANKS
             );
 
             set(
                     new Location(
-                            w,
-                            x + 1,
+                            world,
+                            px + 1,
+                            y + 1,
+                            terminalZ + 12
+                    ),
+                    Material.OAK_PLANKS
+            );
+
+            set(
+                    new Location(
+                            world,
+                            px,
                             y + 2,
-                            tz + 12
+                            terminalZ + 12
                     ),
                     Material.OAK_SLAB
             );
         }
 
-        /*
-         * Sicherheitskontrolle.
-         */
+        // -----------------------------------------------------
+        // Sicherheitskontrolle
+        // -----------------------------------------------------
+
         fill(
                 new Location(
-                        w,
-                        mid - tw / 2 + 5,
+                        world,
+                        x -
+                                terminalWidth / 2 +
+                                5,
                         y + 1,
-                        tz + 20
+                        terminalZ + 20
                 ),
                 new Location(
-                        w,
-                        mid - 2,
+                        world,
+                        x - 2,
                         y + 2,
-                        tz + 22
+                        terminalZ + 22
                 ),
                 Material.IRON_BLOCK
         );
 
-        /*
-         * Gepäckbereich.
-         */
+        // -----------------------------------------------------
+        // Gepäckbereich
+        // -----------------------------------------------------
+
         fill(
                 new Location(
-                        w,
-                        mid + 2,
+                        world,
+                        x + 2,
                         y + 1,
-                        tz + 20
+                        terminalZ + 20
                 ),
                 new Location(
-                        w,
-                        mid + tw / 2 - 5,
+                        world,
+                        x +
+                                terminalWidth / 2 -
+                                5,
                         y + 2,
-                        tz + 22
+                        terminalZ + 22
                 ),
                 Material.WHITE_CONCRETE
         );
 
-        /*
-         * Gates und Jet-Brücken.
-         */
+        // -----------------------------------------------------
+        // Gates
+        // -----------------------------------------------------
+
         for (
-                int i = 0;
-                i < a.gates().size();
-                i++
+                String gateId :
+                airport.gates()
         ) {
 
-            Location g =
-                    a.gate(
-                            a.gates().get(i)
+            Location gate =
+                    airport.gate(
+                            gateId
                     );
 
             fill(
-                    g.clone().add(
+                    gate.clone().add(
                             -5,
                             0,
                             -3
                     ),
-                    g.clone().add(
+                    gate.clone().add(
                             5,
                             0,
                             3
@@ -950,7 +1026,7 @@ public class AirportManager implements Listener {
             );
 
             set(
-                    g.clone().add(
+                    gate.clone().add(
                             0,
                             1,
                             0
@@ -958,13 +1034,15 @@ public class AirportManager implements Listener {
                     Material.SEA_LANTERN
             );
 
+            // Jetbridge
+
             fill(
-                    g.clone().add(
+                    gate.clone().add(
                             5,
                             1,
                             0
                     ),
-                    g.clone().add(
+                    gate.clone().add(
                             12,
                             2,
                             1
@@ -973,112 +1051,107 @@ public class AirportManager implements Listener {
             );
         }
 
-        /*
-         * Tower.
-         */
+        // -----------------------------------------------------
+        // Tower
+        // -----------------------------------------------------
+
         fill(
                 new Location(
-                        w,
-                        c.getBlockX() +
-                                tw / 2 +
+                        world,
+                        x +
+                                terminalWidth / 2 +
                                 10,
                         y,
-                        c.getBlockZ() +
-                                28
+                        z + 28
                 ),
                 new Location(
-                        w,
-                        c.getBlockX() +
-                                tw / 2 +
+                        world,
+                        x +
+                                terminalWidth / 2 +
                                 14,
                         y + 18,
-                        c.getBlockZ() +
-                                32
+                        z + 32
                 ),
                 Material.GRAY_CONCRETE
         );
 
         fill(
                 new Location(
-                        w,
-                        c.getBlockX() +
-                                tw / 2 +
+                        world,
+                        x +
+                                terminalWidth / 2 +
                                 8,
                         y + 18,
-                        c.getBlockZ() +
-                                26
+                        z + 26
                 ),
                 new Location(
-                        w,
-                        c.getBlockX() +
-                                tw / 2 +
+                        world,
+                        x +
+                                terminalWidth / 2 +
                                 16,
                         y + 20,
-                        c.getBlockZ() +
-                                34
+                        z + 34
                 ),
                 Material.LIGHT_BLUE_STAINED_GLASS
         );
 
-        /*
-         * Parkplatz.
-         */
+        // -----------------------------------------------------
+        // Parkplatz
+        // -----------------------------------------------------
+
         fill(
                 new Location(
-                        w,
-                        c.getBlockX() -
-                                tw / 2 -
+                        world,
+                        x -
+                                terminalWidth / 2 -
                                 20,
                         y,
-                        c.getBlockZ() +
-                                22
+                        z + 22
                 ),
                 new Location(
-                        w,
-                        c.getBlockX() -
-                                tw / 2 -
+                        world,
+                        x -
+                                terminalWidth / 2 -
                                 5,
                         y,
-                        c.getBlockZ() +
-                                45
+                        z + 45
                 ),
                 Material.BLACK_CONCRETE
         );
 
-        /*
-         * Zufahrtsstraße.
-         */
+        // -----------------------------------------------------
+        // Zufahrtsstraße
+        // -----------------------------------------------------
+
         fill(
                 new Location(
-                        w,
-                        c.getBlockX() -
-                                tw / 2 -
+                        world,
+                        x -
+                                terminalWidth / 2 -
                                 35,
                         y,
-                        c.getBlockZ() +
-                                15
+                        z + 15
                 ),
                 new Location(
-                        w,
-                        c.getBlockX() -
-                                tw / 2 -
+                        world,
+                        x -
+                                terminalWidth / 2 -
                                 20,
                         y,
-                        c.getBlockZ() +
-                                50
+                        z + 50
                 ),
                 Material.GRAY_CONCRETE
         );
 
         plugin.getLogger().info(
                 "Airport generated: " +
-                        a.id() +
+                        airport.id() +
                         " at " +
-                        c.getBlockX() +
+                        x +
                         "," +
-                        c.getBlockY() +
+                        y +
                         "," +
-                        c.getBlockZ()
+                        z
         );
 
         if (
@@ -1089,38 +1162,57 @@ public class AirportManager implements Listener {
                         )
         ) {
 
-            w.save();
+            world.save();
         }
     }
 
-    /**
-     * Findet den nächstgelegenen Flughafen.
-     */
-    public Airport nearest(Location l) {
+    // =========================================================
+    // NÄCHSTER FLUGHAFEN
+    // =========================================================
+
+    public Airport nearest(
+            Location location
+    ) {
+
+        if (location == null) {
+            return null;
+        }
 
         return airports
                 .values()
                 .stream()
                 .filter(
-                        a ->
-                                a.center()
-                                        .getWorld()
-                                        == l.getWorld()
+                        airport ->
+                                airport != null
+                                        &&
+                                airport.center() != null
+                                        &&
+                                airport.center().getWorld()
+                                        == location.getWorld()
                 )
                 .min(
                         Comparator.comparingDouble(
-                                a ->
-                                        a.center()
-                                                .distanceSquared(l)
+                                airport ->
+                                        airport.center()
+                                                .distanceSquared(
+                                                        location
+                                                )
                         )
                 )
                 .orElse(null);
     }
 
-    /**
-     * Sucht Flughäfen anhand ID oder Name.
-     */
-    public List<Airport> find(String query) {
+    // =========================================================
+    // SUCHE
+    // =========================================================
+
+    public List<Airport> find(
+            String query
+    ) {
+
+        if (query == null) {
+            return List.of();
+        }
 
         String q =
                 query.toLowerCase(
@@ -1131,11 +1223,13 @@ public class AirportManager implements Listener {
                 .values()
                 .stream()
                 .filter(
-                        a ->
-                                a.id()
-                                        .equalsIgnoreCase(query)
+                        airport ->
+                                airport.id()
+                                        .equalsIgnoreCase(
+                                                query
+                                        )
                                         ||
-                                a.name()
+                                airport.name()
                                         .toLowerCase(
                                                 Locale.ROOT
                                         )
@@ -1149,15 +1243,15 @@ public class AirportManager implements Listener {
                 .toList();
     }
 
-    /**
-     * Wird beim Laden eines Chunks ausgeführt.
-     *
-     * Kann automatisch in der Nähe von Dörfern
-     * einen Flughafen erzeugen.
-     */
-    @EventHandler(ignoreCancelled = true)
+    // =========================================================
+    // CHUNK LOAD / AUTOMATISCHE GENERIERUNG
+    // =========================================================
+
+    @EventHandler(
+            ignoreCancelled = true
+    )
     public void onChunkLoad(
-            ChunkLoadEvent e
+            ChunkLoadEvent event
     ) {
 
         if (
@@ -1171,18 +1265,18 @@ public class AirportManager implements Listener {
             return;
         }
 
-        World w =
-                e.getWorld();
+        World world =
+                event.getWorld();
 
-        Chunk ch =
-                e.getChunk();
+        Chunk chunk =
+                event.getChunk();
 
         String key =
-                w.getUID() +
+                world.getUID() +
                         ":" +
-                        ch.getX() +
+                        chunk.getX() +
                         ":" +
-                        ch.getZ();
+                        chunk.getZ();
 
         if (
                 !villageChecks.add(key)
@@ -1203,12 +1297,12 @@ public class AirportManager implements Listener {
                         plugin,
                         () ->
                                 tryVillageAirport(
-                                        w,
+                                        world,
                                         new Location(
-                                                w,
-                                                ch.getX() * 16 + 8,
+                                                world,
+                                                chunk.getX() * 16 + 8,
                                                 64,
-                                                ch.getZ() * 16 + 8
+                                                chunk.getZ() * 16 + 8
                                         ),
                                         radius
                                 ),
@@ -1216,18 +1310,14 @@ public class AirportManager implements Listener {
                 );
     }
 
-    /**
-     * Prüft, ob sich ein Dorf in der Nähe befindet
-     * und erzeugt gegebenenfalls einen Regional-Flughafen.
-     */
     private void tryVillageAirport(
-            World w,
+            World world,
             Location probe,
             int radius
     ) {
 
         if (
-                !worldAllowed(w)
+                !worldAllowed(world)
         ) {
 
             return;
@@ -1236,7 +1326,7 @@ public class AirportManager implements Listener {
         try {
 
             Location village =
-                    w.locateNearestStructure(
+                    world.locateNearestStructure(
                             probe,
                             StructureType.VILLAGE,
                             radius,
@@ -1247,8 +1337,8 @@ public class AirportManager implements Listener {
                 return;
             }
 
-            String vk =
-                    w.getUID() +
+            String villageKey =
+                    world.getUID() +
                             ":" +
                             Math.floorDiv(
                                     village.getBlockX(),
@@ -1260,9 +1350,13 @@ public class AirportManager implements Listener {
                                     64
                             );
 
+            String checkKey =
+                    "V:" +
+                            villageKey;
+
             if (
                     villageChecks.contains(
-                            "V:" + vk
+                            checkKey
                     )
             ) {
 
@@ -1270,73 +1364,73 @@ public class AirportManager implements Listener {
             }
 
             villageChecks.add(
-                    "V:" + vk
+                    checkKey
             );
 
-            /*
-             * Zufallswahrscheinlichkeit.
-             */
-            if (
-                    new Random(
-                            village.getWorld().getSeed()
-                                    ^
-                            ((long) village.getBlockX() << 32)
-                                    ^
-                            village.getBlockZ()
-                    ).nextDouble()
-                            >
+            double chance =
                     plugin.getConfig()
                             .getDouble(
                                     "airports.village-generation.chance",
                                     0.16
-                            )
+                            );
+
+            Random random =
+                    new Random(
+                            world.getSeed()
+                                    ^
+                            ((long)
+                                    village.getBlockX()
+                                    << 32)
+                                    ^
+                            village.getBlockZ()
+                    );
+
+            if (
+                    random.nextDouble()
+                            >
+                            chance
             ) {
 
                 return;
             }
 
-            /*
-             * Mindestabstand zu anderen Flughäfen.
-             */
-            double minDist =
+            double minimumDistance =
                     plugin.getConfig()
                             .getDouble(
                                     "airports.minimum-distance",
                                     1800
                             );
 
-            if (
-                    airports.values()
+            boolean tooClose =
+                    airports
+                            .values()
                             .stream()
                             .anyMatch(
-                                    a ->
-                                            a.center()
+                                    airport ->
+                                            airport.center()
                                                     .getWorld()
-                                                    == w
+                                                    == world
                                                     &&
-                                            a.center()
+                                            airport.center()
                                                     .distance(
                                                             village
                                                     )
-                                                    < minDist
-                            )
-            ) {
+                                                    <
+                                                    minimumDistance
+                            );
 
+            if (tooClose) {
                 return;
             }
 
-            int x =
-                    village.getBlockX()
-                            +
+            int offsetX =
                     plugin.getConfig()
                             .getInt(
                                     "airports.village-generation.offset-x",
                                     90
                             );
 
-            int z =
-                    village.getBlockZ()
-                            +
+            int offsetZ =
                     plugin.getConfig()
                             .getInt(
                                     "airports.village-generation.offset-z",
@@ -1352,9 +1446,11 @@ public class AirportManager implements Listener {
 
             Location site =
                     bestSite(
-                            w,
-                            x,
-                            z,
+                            world,
+                            village.getBlockX()
+                                    + offsetX,
+                            village.getBlockZ()
+                                    + offsetZ,
                             size
                     );
 
@@ -1362,30 +1458,16 @@ public class AirportManager implements Listener {
                 return;
             }
 
-            x =
-                    site.getBlockX();
-
-            z =
-                    site.getBlockZ();
-
-            int y =
-                    site.getBlockY();
-
             String id =
                     uniqueRegionalId(
-                            x,
-                            z
+                            site.getBlockX(),
+                            site.getBlockZ()
                     );
 
             createAirport(
                     id,
                     "Village Regional Airport",
-                    new Location(
-                            w,
-                            x,
-                            y,
-                            z
-                    ),
+                    site,
                     size
             );
 
@@ -1394,7 +1476,7 @@ public class AirportManager implements Listener {
             ) {
 
                 plugin.stations.scanVillage(
-                        w,
+                        world,
                         village
                 );
             }
@@ -1408,40 +1490,42 @@ public class AirportManager implements Listener {
         }
     }
 
-    /**
-     * Prüft, ob eine Welt für Flughäfen zugelassen ist.
-     */
+    // =========================================================
+    // WELT PRÜFEN
+    // =========================================================
+
     private boolean worldAllowed(
-            World w
+            World world
     ) {
 
-        var worlds =
+        if (world == null) {
+            return false;
+        }
+
+        List<String> allowed =
                 plugin.getConfig()
                         .getStringList(
                                 "airports.allowed-worlds"
                         );
 
-        /*
-         * Keine Liste = alle Welten.
-         */
         if (
-                worlds.isEmpty()
+                allowed == null
+                        ||
+                allowed.isEmpty()
         ) {
 
             return true;
         }
 
         /*
-         * "world" ist standardmäßig eingetragen.
-         *
-         * Wenn der Server eine andere Hauptwelt verwendet
-         * und keine Welt namens "world" existiert,
-         * wird die aktuelle Welt trotzdem erlaubt.
+         * Wenn in der Standardconfig "world"
+         * steht, aber die Welt anders heißt,
+         * erlauben wir die vorhandene Hauptwelt.
          */
         if (
-                worlds.size() == 1
+                allowed.size() == 1
                         &&
-                worlds.contains("world")
+                allowed.contains("world")
                         &&
                 Bukkit.getWorld("world") == null
         ) {
@@ -1449,47 +1533,47 @@ public class AirportManager implements Listener {
             return true;
         }
 
-        return worlds.contains(
-                w.getName()
+        return allowed.contains(
+                world.getName()
         );
     }
 
-    /**
-     * Sucht einen geeigneten Bauplatz.
-     */
+    // =========================================================
+    // TERRAIN-SUCHE
+    // =========================================================
+
     private Location bestSite(
-            World w,
-            int cx,
-            int cz,
+            World world,
+            int centerX,
+            int centerZ,
             int size
     ) {
 
+        int radius =
+                plugin.getConfig()
+                        .getInt(
+                                "airports.terrain-search-radius",
+                                192
+                        );
+
         return bestSite(
-                w,
-                cx,
-                cz,
+                world,
+                centerX,
+                centerZ,
                 size,
                 Math.max(
-                        size * 2,
-                        plugin.getConfig()
-                                .getInt(
-                                        "airports.terrain-search-radius",
-                                        192
-                                )
+                        radius,
+                        size * 2
                 )
         );
     }
 
-    /**
-     * Sucht einen geeigneten Bauplatz
-     * mit einem frei wählbaren Suchradius.
-     */
     private Location bestSite(
-            World w,
-            int cx,
-            int cz,
+            World world,
+            int centerX,
+            int centerZ,
             int size,
-            int search
+            int searchRadius
     ) {
 
         int step =
@@ -1502,41 +1586,48 @@ public class AirportManager implements Listener {
                                 )
                 );
 
-        search =
-                Math.max(
-                        size * 2,
-                        search
-                );
-
-        double best =
+        double bestScore =
                 Double.MAX_VALUE;
 
-        Location chosen =
+        Location best =
                 null;
+
+        int half =
+                Math.max(
+                        10,
+                        size / 2
+                );
+
+        int maxHeightDifference =
+                plugin.getConfig()
+                        .getInt(
+                                "airports.max-terrain-height-difference",
+                                8
+                        );
 
         for (
                 int x =
-                        cx - search;
+                        centerX - searchRadius;
 
                 x <=
-                        cx + search;
+                        centerX + searchRadius;
 
                 x += step
         ) {
 
             for (
                     int z =
-                            cz - search;
+                            centerZ - searchRadius;
 
                     z <=
-                            cz + search;
+                            centerZ + searchRadius;
 
                     z += step
             ) {
 
                 if (
                         !isSuitable(
-                                w,
+                                world,
                                 x,
                                 z
                         )
@@ -1545,65 +1636,61 @@ public class AirportManager implements Listener {
                     continue;
                 }
 
-                int half =
-                        Math.max(
-                                10,
-                                size / 2
-                        );
+                int minHeight =
+                        Integer.MAX_VALUE;
 
-                int min =
-                        999;
-
-                int max =
-                        -999;
+                int maxHeight =
+                        Integer.MIN_VALUE;
 
                 boolean water =
                         false;
 
+                int sampleStep =
+                        Math.max(
+                                4,
+                                step
+                        );
+
                 for (
-                        int sx = -half;
+                        int sx =
+                                -half;
 
                         sx <= half;
 
-                        sx += Math.max(
-                                4,
-                                step
-                        )
+                        sx += sampleStep
                 ) {
 
                     for (
-                            int sz = -half;
+                            int sz =
+                                    -half;
 
                             sz <= half;
 
-                            sz += Math.max(
-                                    4,
-                                    step
-                            )
+                            sz += sampleStep
                     ) {
 
-                        int yy =
-                                w.getHighestBlockYAt(
+                        int height =
+                                world.getHighestBlockYAt(
                                         x + sx,
                                         z + sz
                                 );
 
-                        min =
+                        minHeight =
                                 Math.min(
-                                        min,
-                                        yy
+                                        minHeight,
+                                        height
                                 );
 
-                        max =
+                        maxHeight =
                                 Math.max(
-                                        max,
-                                        yy
+                                        maxHeight,
+                                        height
                                 );
 
                         Material top =
-                                w.getBlockAt(
+                                world.getBlockAt(
                                         x + sx,
-                                        yy,
+                                        height,
                                         z + sz
                                 ).getType();
 
@@ -1618,102 +1705,111 @@ public class AirportManager implements Listener {
                     }
                 }
 
-                int slope =
-                        max - min;
+                int heightDifference =
+                        maxHeight -
+                                minHeight;
 
                 if (
                         water
                                 ||
-                        slope >
-                                plugin.getConfig()
-                                        .getInt(
-                                                "airports.max-terrain-height-difference",
-                                                8
-                                        )
+                        heightDifference >
+                                maxHeightDifference
                 ) {
 
                     continue;
                 }
 
-                double score =
+                double distance =
                         Math.hypot(
-                                x - cx,
-                                z - cz
-                        )
-                                +
-                        slope * 25;
+                                x - centerX,
+                                z - centerZ
+                        );
+
+                double score =
+                        distance +
+                                heightDifference *
+                                        25.0;
 
                 if (
-                        score < best
+                        score <
+                        bestScore
                 ) {
 
-                    best =
+                    bestScore =
                             score;
 
-                    chosen =
+                    best =
                             new Location(
-                                    w,
+                                    world,
                                     x,
-                                    max + 1,
+                                    maxHeight + 1,
                                     z
                             );
                 }
             }
         }
 
-        return chosen;
+        return best;
     }
 
-    /**
-     * Prüft das Biom.
-     *
-     * Ozeane, Flüsse, Sümpfe usw. werden ausgeschlossen.
-     */
+    // =========================================================
+    // BIOM-PRÜFUNG
+    // =========================================================
+
     private boolean isSuitable(
-            World w,
+            World world,
             int x,
             int z
     ) {
 
-        Biome b =
-                w.getBiome(
+        Biome biome =
+                world.getBiome(
                         x,
                         z
                 );
 
-        String n =
-                b.getKey()
-                        .getKey();
+        String name =
+                biome.getKey()
+                        .getKey()
+                        .toLowerCase(
+                                Locale.ROOT
+                        );
 
-        return !n.contains("ocean")
-                &&
-                !n.contains("river")
-                &&
-                !n.contains("swamp")
-                &&
-                !n.contains("deep_");
+        if (
+                name.contains("ocean")
+                        ||
+                name.contains("river")
+                        ||
+                name.contains("swamp")
+                        ||
+                name.contains("deep_")
+        ) {
+
+            return false;
+        }
+
+        return true;
     }
 
-    /**
-     * Erstellt eine eindeutige ID
-     * für automatisch generierte Regional-Flughäfen.
-     */
+    // =========================================================
+    // REGIONALE ID
+    // =========================================================
+
     private String uniqueRegionalId(
             int x,
             int z
     ) {
 
         String base =
-                "REG"
-                        +
-                Integer.toUnsignedString(
-                        (x * 73428767)
-                                ^
-                        (z * 912931),
-                        36
-                ).toUpperCase(
-                        Locale.ROOT
-                );
+                "REG" +
+                        Integer.toUnsignedString(
+                                (x * 73428767)
+                                        ^
+                                (z * 912931),
+                                36
+                        ).toUpperCase(
+                                Locale.ROOT
+                        );
 
         String id =
                 base.substring(
@@ -1724,89 +1820,95 @@ public class AirportManager implements Listener {
                         )
                 );
 
-        int i = 1;
+        String result =
+                id;
 
-        String out = id;
+        int number = 1;
 
         while (
-                airports.containsKey(out)
-        ) {
-
-            out =
-                    id +
-                            (i++);
-        }
-
-        return out;
-    }
-
-    /**
-     * Wird von /airport generate verwendet.
-     *
-     * Sucht direkt in der Umgebung des Spielers
-     * nach geeignetem Terrain.
-     */
-    public void randomGenerateAround(
-            Location l
-    ) {
-
-        if (
-                l == null
-                        ||
-                l.getWorld() == null
-        ) {
-
-            return;
-        }
-
-        /*
-         * Welt überprüfen.
-         */
-        if (
-                !worldAllowed(
-                        l.getWorld()
+                airports.containsKey(
+                        result
                 )
         ) {
 
+            result =
+                    id +
+                            number++;
+        }
+
+        return result;
+    }
+
+    // =========================================================
+    // /airport generate
+    // =========================================================
+
+    public void randomGenerateAround(
+            Location location
+    ) {
+
+        if (
+                location == null
+                        ||
+                location.getWorld() == null
+        ) {
+
             plugin.getLogger().warning(
-                    "Airport generation blocked because world is not in airports.allowed-worlds: "
-                            +
-                            l.getWorld().getName()
+                    "Airport generation: ungültige Position."
             );
 
             return;
         }
 
-        /*
-         * Mindestabstand zu bereits vorhandenen Flughäfen.
-         */
-        double minDist =
+        if (
+                !worldAllowed(
+                        location.getWorld()
+                )
+        ) {
+
+            plugin.getLogger().warning(
+                    "Airport generation blockiert: Welt " +
+                            location.getWorld().getName() +
+                            " ist nicht erlaubt."
+            );
+
+            return;
+        }
+
+        double minimumDistance =
                 plugin.getConfig()
                         .getDouble(
                                 "airports.minimum-distance",
                                 1800
                         );
 
-        if (
-                airports.values()
+        boolean tooClose =
+                airports
+                        .values()
                         .stream()
                         .anyMatch(
-                                a ->
-                                        a.center()
+                                airport ->
+                                        airport.center()
                                                 .getWorld()
-                                                == l.getWorld()
+                                                ==
+                                                location.getWorld()
                                                 &&
-                                        a.center()
-                                                .distance(l)
-                                                < minDist
-                        )
-        ) {
+                                        airport.center()
+                                                .distance(
+                                                        location
+                                                )
+                                                <
+                                                minimumDistance
+                        );
+
+        if (tooClose) {
 
             plugin.getLogger().info(
-                    "Airport generation skipped: an airport is already within "
-                            +
-                            (int) minDist +
-                            " blocks."
+                    "Airport generation übersprungen: " +
+                            "Ein Flughafen befindet sich bereits " +
+                            "innerhalb von " +
+                            (int) minimumDistance +
+                            " Blöcken."
             );
 
             return;
@@ -1819,61 +1921,30 @@ public class AirportManager implements Listener {
                                 45
                         );
 
-        /*
-         * Für manuelle Generierung wird mindestens
-         * ein Radius von 256 Blöcken verwendet.
-         */
-        Location site =
-                bestSite(
-                        l.getWorld(),
-                        l.getBlockX(),
-                        l.getBlockZ(),
-                        size,
-                        Math.max(
-                                256,
-                                plugin.getConfig()
-                                        .getInt(
-                                                "airports.terrain-search-radius",
-                                                192
-                                        )
-                        )
+        int searchRadius =
+                Math.max(
+                        256,
+                        plugin.getConfig()
+                                .getInt(
+                                        "airports.terrain-search-radius",
+                                        192
+                                )
                 );
 
-        if (
-                site == null
-                /**
-     * Gibt alle vorhandenen Flughäfen zurück.
-     */
-    public Collection<Airport> all() {
-        return Collections.unmodifiableCollection(
-                airports.values()
-        );
-    }
+        Location site =
+                bestSite(
+                        location.getWorld(),
+                        location.getBlockX(),
+                        location.getBlockZ(),
+                        size,
+                        searchRadius
+                );
 
-    /**
-     * Gibt einen Flughafen anhand seiner ID zurück.
-     */
-    public Airport get(String id) {
-        if (id == null) {
-            return null;
-        }
-
-        return airports.get(
-                id.toUpperCase(Locale.ROOT)
-        );
-    }
-        ) {
+        if (site == null) {
 
             plugin.getLogger().warning(
-                    "No suitable terrain found for a new airport near "
-                            +
-                            l.getBlockX()
-                            +
-                            ","
-                            +
-                            l.getBlockZ()
-                            +
-                            "."
+                    "Kein geeignetes Terrain für einen " +
+                            "Flughafen gefunden."
             );
 
             return;
@@ -1890,6 +1961,11 @@ public class AirportManager implements Listener {
                 "Regional Airport",
                 site,
                 size
+        );
+
+        plugin.getLogger().info(
+                "Manueller Flughafen erstellt: " +
+                        id
         );
     }
 }
