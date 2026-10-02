@@ -661,6 +661,15 @@ public class AirportManager implements Listener {
         );
     }
 
+    /** Rebuilds the project-style visual details for an existing airport. */
+    public void rebuildDesign(Airport airport) {
+        if (airport == null) {
+            return;
+        }
+        rebuildGates(airport);
+        buildRealisticAirportDetails(airport);
+    }
+
     /**
      * Adds the visual language from the project design:
      * glass terminal facade, realistic check-in/security/baggage zones,
