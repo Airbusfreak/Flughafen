@@ -11,12 +11,18 @@ public class Airport {
         int i=gates.indexOf(gate);
         if(i<0)i=0;
 
-        int count=Math.max(1,gates.size());
-        double centeredIndex=i-(count-1)/2.0;
+        int level=Math.max(1,level());
+        int perRow=level>=3 ? 6 : Math.max(3,gates.size());
 
-        // Gate row directly in front of the terminal.
-        double x=center.getX()+centeredIndex*11.0;
-        double z=center.getZ()+10.0;
+        int row=i/perRow;
+        int col=i%perRow;
+        int rowCount=(gates.size()+perRow-1)/perRow;
+        int columns=Math.min(perRow,gates.size());
+        double centeredCol=col-(columns-1)/2.0;
+        double x=center.getX()+centeredCol*11.0;
+
+        // Higher-level airports get a second pier/stand row.
+        double z=center.getZ()+10.0+row*22.0;
 
         return new Location(
                 center.getWorld(),
@@ -24,5 +30,4 @@ public class Airport {
                 center.getY()+1,
                 z
         );
-    }
-}
+    }}
