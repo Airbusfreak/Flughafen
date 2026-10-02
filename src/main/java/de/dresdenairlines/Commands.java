@@ -125,7 +125,7 @@ public final class Commands implements CommandExecutor, TabCompleter {
 
                         player.sendMessage(
                                 ChatColor.GREEN +
-                                        amount +
+                                        String.valueOf(amount) +
                                         " $ an " +
                                         target.getName() +
                                         " gegeben."
@@ -190,7 +190,7 @@ public final class Commands implements CommandExecutor, TabCompleter {
 
                             player.sendMessage(
                                     ChatColor.RED +
-                                            amount +
+                                            String.valueOf(amount) +
                                             " $ von " +
                                             target.getName() +
                                             " genommen."
@@ -805,7 +805,7 @@ public final class Commands implements CommandExecutor, TabCompleter {
 
                         player.sendMessage(
                                 ChatColor.YELLOW +
-                                        rank++ +
+                                        String.valueOf(rank++) +
                                         ". " +
                                         ChatColor.WHITE +
                                         a.name +
