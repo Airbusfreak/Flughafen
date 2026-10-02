@@ -195,7 +195,7 @@ public final class AirportLevelManager {
 
         // Level 4
         if (a.level() == 4) {
-            a.addGates(3);
+            a.addGates(4);
 
             fill(
                     w,
@@ -210,7 +210,7 @@ public final class AirportLevelManager {
 
         // Level 5
         if (a.level() == 5) {
-            a.addGates(3);
+            a.addGates(5);
 
             int rz = cz - s - 35;
 
@@ -239,8 +239,10 @@ public final class AirportLevelManager {
             }
         }
 
+        // Rebuild the visual airport design after every level upgrade.
+        p.airports.rebuildDesign(a);
+
         if (a.gates().size() != before) {
-            p.airports.rebuildGates(a);
             p.gates.rebuild(
                     p.storage.flights.values()
             );
