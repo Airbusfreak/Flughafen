@@ -19,6 +19,9 @@ airports:
     size: 45
     offset-x: 90
     offset-z: 90
+  automatic-generation:
+    size: 45
+    search-radius: 320
 traffic:
   enabled: true
   spawn-interval-seconds: 20
