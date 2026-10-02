@@ -11,7 +11,7 @@ public final class DresdenAirlines extends JavaPlugin {
   getServer().getPluginManager().registerEvents(airports,this); getServer().getPluginManager().registerEvents(stations,this); getServer().getPluginManager().registerEvents(airlineGUI,this); getServer().getPluginManager().registerEvents(flightGUI,this); getServer().getPluginManager().registerEvents(passengers,this);
   getCommand("airline").setExecutor(new Commands(this)); getCommand("airport").setExecutor(new Commands(this)); getCommand("flight").setExecutor(new Commands(this));
   getServer().getScheduler().runTaskLater(this,()->{ airports.load(); stations.load(); airports.createInitial(); airportLevels.load(); gates.rebuild(storage.flights.values()); },40);
-  getServer().getScheduler().runTaskTimer(this,()->{airlines.economyTick(); passengers.tick(); passengers.animateNpcs(); renderer.tick(); stations.tick(); simulation.tick();},20,20);
+  getServer().getScheduler().runTaskTimer(this,()->{airlines.economyTick(); passengers.tick(); passengers.animateNpcs(); renderer.tick(); stations.tick(); simulation.tick(); airports.automaticGenerationTick();},20,20);
   getServer().getScheduler().runTaskTimer(this,storage::save,20*300,20*300);
  }
  public void onDisable(){if(airports!=null)airports.save(); if(stations!=null)stations.save(); if(airportLevels!=null)airportLevels.save(); storage.save(); if(passengers!=null)passengers.wallet.save();}
