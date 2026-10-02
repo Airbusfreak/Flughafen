@@ -240,6 +240,7 @@ public final class AirportLevelManager {
         }
 
         if (a.gates().size() != before) {
+            p.airports.rebuildGates(a);
             p.gates.rebuild(
                     p.storage.flights.values()
             );
