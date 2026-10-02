@@ -616,6 +616,51 @@ public class AirportManager implements Listener {
     // FLUGHAFEN BAUEN
     // =========================================================
 
+    /**
+     * Rebuilds every physical gate stand and jet bridge of an airport.
+     */
+    public void rebuildGates(Airport airport) {
+        if (airport == null || airport.center() == null || airport.center().getWorld() == null) {
+            return;
+        }
+        for (String gateId : airport.gates()) {
+            buildGate(airport, gateId);
+        }
+    }
+
+    private void buildGate(Airport airport, String gateId) {
+        Location gate = airport.gate(gateId);
+        if (gate == null || gate.getWorld() == null) {
+            return;
+        }
+
+        fill(
+                gate.clone().add(-9, 0, -7),
+                gate.clone().add(9, 0, 7),
+                Material.LIGHT_GRAY_CONCRETE
+        );
+
+        fill(
+                gate.clone().add(-1, 1, -6),
+                gate.clone().add(1, 1, 6),
+                Material.YELLOW_CONCRETE
+        );
+
+        set(gate.clone().add(0, 1, 0), Material.SEA_LANTERN);
+
+        fill(
+                gate.clone().add(-2, 1, 2),
+                gate.clone().add(2, 2, 5),
+                Material.GLASS
+        );
+
+        fill(
+                gate.clone().add(-1, 1, 5),
+                gate.clone().add(1, 3, 8),
+                Material.SMOOTH_QUARTZ
+        );
+    }
+
     private void build(
             Airport airport
     ) {
@@ -1042,54 +1087,6 @@ public class AirportManager implements Listener {
         rebuildGates(airport);
 
         // -----------------------------------------------------
-    /**
-     * Rebuilds every physical gate stand and jet bridge of an airport.
-     * Gate positions remain stable when more gates are added later.
-     */
-    public void rebuildGates(Airport airport) {
-        if (airport == null || airport.center() == null || airport.center().getWorld() == null) {
-            return;
-        }
-
-        for (String gateId : airport.gates()) {
-            buildGate(airport, gateId);
-        }
-    }
-
-    private void buildGate(Airport airport, String gateId) {
-        Location gate = airport.gate(gateId);
-        if (gate == null || gate.getWorld() == null) {
-            return;
-        }
-
-        fill(
-                gate.clone().add(-9, 0, -7),
-                gate.clone().add(9, 0, 7),
-                Material.LIGHT_GRAY_CONCRETE
-        );
-
-        fill(
-                gate.clone().add(-1, 1, -6),
-                gate.clone().add(1, 1, 6),
-                Material.YELLOW_CONCRETE
-        );
-
-        set(gate.clone().add(0, 1, 0), Material.SEA_LANTERN);
-
-        // Glass jet bridge from the stand towards the terminal.
-        fill(
-                gate.clone().add(-2, 1, 2),
-                gate.clone().add(2, 2, 5),
-                Material.GLASS
-        );
-
-        fill(
-                gate.clone().add(-1, 1, 5),
-                gate.clone().add(1, 3, 6),
-                Material.SMOOTH_QUARTZ
-        );
-    }
-
         // Tower
         // -----------------------------------------------------
 
