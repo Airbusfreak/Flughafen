@@ -1178,14 +1178,24 @@ public final class Commands implements CommandExecutor, TabCompleter {
 
                     try {
 
-                        p.airports.randomGenerateAround(
-                                player.getLocation()
-                        );
+                        boolean created =
+                                p.airports.randomGenerateAround(
+                                        player.getLocation()
+                                );
 
-                        player.sendMessage(
-                                ChatColor.GREEN +
-                                        "Die Region wurde auf einen geeigneten Standort geprüft."
-                        );
+                        if (created) {
+                            player.sendMessage(
+                                    ChatColor.GREEN +
+                                            "Flughafen erfolgreich generiert!"
+                            );
+                        } else {
+                            player.sendMessage(
+                                    ChatColor.YELLOW +
+                                            "Kein neuer Flughafen wurde generiert. "
+                                            + "Möglicherweise ist bereits ein Flughafen zu nah "
+                                            + "oder das Gelände ist nicht geeignet."
+                            );
+                        }
 
                     } catch (Exception ex) {
 
