@@ -661,6 +661,234 @@ public class AirportManager implements Listener {
         );
     }
 
+    /**
+     * Adds the visual language from the project design:
+     * glass terminal facade, realistic check-in/security/baggage zones,
+     * passenger seating, lighting, roads, parking and level-based expansion.
+     */
+    private void buildRealisticAirportDetails(Airport airport) {
+        Location c = airport.center();
+        World w = c.getWorld();
+        int x = c.getBlockX();
+        int y = c.getBlockY();
+        int z = c.getBlockZ();
+        int level = Math.max(1, airport.level());
+
+        int tw = plugin.getConfig().getInt("airports.terminal-width", 55);
+        int td = plugin.getConfig().getInt("airports.terminal-depth", 35);
+        int tz = z + 18;
+
+        // Main terminal interior: layered floor, ceiling and facade.
+        fill(
+                new Location(w, x - tw / 2 + 2, y + 1, tz + 2),
+                new Location(w, x + tw / 2 - 2, y + 1, tz + td - 2),
+                Material.POLISHED_ANDESITE
+        );
+
+        fill(
+                new Location(w, x - tw / 2 + 2, y + 5, tz + 2),
+                new Location(w, x + tw / 2 - 2, y + 5, tz + td - 2),
+                Material.SMOOTH_QUARTZ
+        );
+
+        // Front glazing and structural mullions.
+        for (int px = x - tw / 2 + 2; px <= x + tw / 2 - 2; px += 6) {
+            fill(
+                    new Location(w, px, y + 2, tz),
+                    new Location(w, px, y + 5, tz),
+                    Material.SMOOTH_QUARTZ
+            );
+        }
+
+        // Interior columns and ceiling lights.
+        for (int px = x - tw / 2 + 6; px <= x + tw / 2 - 6; px += 10) {
+            fill(
+                    new Location(w, px, y + 2, tz + 7),
+                    new Location(w, px + 1, y + 5, tz + 8),
+                    Material.SMOOTH_QUARTZ
+            );
+
+            set(new Location(w, px, y + 4, tz + 14), Material.SEA_LANTERN);
+            set(new Location(w, px + 5, y + 4, tz + 14), Material.SEA_LANTERN);
+        }
+
+        // Check-in islands with dark counters and overhead information boards.
+        for (int px = x - tw / 2 + 5; px <= x + tw / 2 - 8; px += 8) {
+            fill(
+                    new Location(w, px, y + 2, tz + 5),
+                    new Location(w, px + 4, y + 2, tz + 6),
+                    Material.GRAY_CONCRETE
+            );
+
+            fill(
+                    new Location(w, px + 1, y + 3, tz + 4),
+                    new Location(w, px + 3, y + 4, tz + 4),
+                    Material.BLACK_CONCRETE
+            );
+
+            set(new Location(w, px + 2, y + 5, tz + 5), Material.LIGHT_BLUE_STAINED_GLASS);
+        }
+
+        // Security lanes: several independent lanes instead of one block.
+        int secZ = tz + 20;
+        for (int px = x - tw / 2 + 6; px <= x + 4; px += 6) {
+            fill(
+                    new Location(w, px, y + 2, secZ),
+                    new Location(w, px + 4, y + 2, secZ + 4),
+                    Material.IRON_BLOCK
+            );
+            fill(
+                    new Location(w, px + 1, y + 3, secZ + 1),
+                    new Location(w, px + 3, y + 3, secZ + 1),
+                    Material.IRON_BARS
+            );
+        }
+
+        // Baggage reclaim: two realistic conveyor loops.
+        int bagZ = tz + 27;
+        for (int bx = x - 12; bx <= x + 12; bx += 12) {
+            fill(
+                    new Location(w, bx - 5, y + 2, bagZ),
+                    new Location(w, bx + 5, y + 2, bagZ + 5),
+                    Material.BLACK_CONCRETE
+            );
+            fill(
+                    new Location(w, bx - 3, y + 3, bagZ + 1),
+                    new Location(w, bx + 3, y + 3, bagZ + 4),
+                    Material.GRAY_CONCRETE
+            );
+        }
+
+        // Gate lounges: rows of seats facing the apron.
+        int loungeZ = tz + td - 6;
+        for (int px = x - tw / 2 + 7; px <= x + tw / 2 - 8; px += 6) {
+            set(new Location(w, px, y + 2, loungeZ), Material.DARK_OAK_PLANKS);
+            set(new Location(w, px + 1, y + 2, loungeZ), Material.DARK_OAK_PLANKS);
+            set(new Location(w, px, y + 3, loungeZ), Material.DARK_OAK_SLAB);
+        }
+
+        // Road markings / curb around the terminal.
+        fill(
+                new Location(w, x - tw / 2 - 18, y, tz - 5),
+                new Location(w, x + tw / 2 + 18, y, tz - 2),
+                Material.BLACK_CONCRETE
+        );
+        for (int px = x - tw / 2 - 14; px <= x + tw / 2 + 14; px += 8) {
+            fill(
+                    new Location(w, px, y + 1, tz - 4),
+                    new Location(w, px + 3, y + 1, tz - 4),
+                    Material.WHITE_CONCRETE
+            );
+        }
+
+        // Level 2: larger two-storey terminal and car park.
+        if (level >= 2) {
+            int extZ = tz + td;
+            fill(
+                    new Location(w, x - tw / 2 + 6, y + 1, extZ),
+                    new Location(w, x + tw / 2 - 6, y + 4, extZ + 8),
+                    Material.SMOOTH_QUARTZ
+            );
+            fill(
+                    new Location(w, x - tw / 2 + 8, y + 2, extZ),
+                    new Location(w, x + tw / 2 - 8, y + 3, extZ),
+                    Material.GLASS
+            );
+
+            fill(
+                    new Location(w, x - tw / 2 - 22, y, z + 58),
+                    new Location(w, x + tw / 2 + 22, y, z + 78),
+                    Material.GRAY_CONCRETE
+            );
+            for (int px = x - tw / 2 - 18; px < x + tw / 2 + 18; px += 5) {
+                set(new Location(w, px, y + 1, z + 62), Material.WHITE_CONCRETE);
+            }
+        }
+
+        // Level 3: central concourse, second storey and extra apron stands.
+        if (level >= 3) {
+            fill(
+                    new Location(w, x - 12, y + 6, tz + 4),
+                    new Location(w, x + 12, y + 7, tz + td + 12),
+                    Material.SMOOTH_QUARTZ
+            );
+            fill(
+                    new Location(w, x - 10, y + 6, tz + 5),
+                    new Location(w, x + 10, y + 6, tz + td + 10),
+                    Material.GLASS
+            );
+
+            for (int px = x - 20; px <= x + 20; px += 8) {
+                fill(
+                        new Location(w, px, y + 8, tz + 8),
+                        new Location(w, px + 2, y + 8, tz + 10),
+                        Material.SEA_LANTERN
+                );
+            }
+        }
+
+        // Level 4: international terminal wing + larger landside access.
+        if (level >= 4) {
+            int wingX = x + tw / 2 + 10;
+
+            fill(
+                    new Location(w, wingX, y, tz + 4),
+                    new Location(w, wingX + 28, y + 5, tz + td + 12),
+                    Material.SMOOTH_QUARTZ
+            );
+
+            fill(
+                    new Location(w, wingX, y + 2, tz + 5),
+                    new Location(w, wingX, y + 5, tz + td + 10),
+                    Material.LIGHT_BLUE_STAINED_GLASS
+            );
+
+            fill(
+                    new Location(w, x - tw / 2 - 35, y, tz - 10),
+                    new Location(w, x + tw / 2 + 45, y, tz - 7),
+                    Material.BLACK_CONCRETE
+            );
+        }
+
+        // Level 5: satellite pier and premium lounge.
+        if (level >= 5) {
+            int pierZ = z + 72;
+
+            fill(
+                    new Location(w, x - 5, y, pierZ),
+                    new Location(w, x + 5, y + 5, pierZ + 38),
+                    Material.SMOOTH_QUARTZ
+            );
+
+            fill(
+                    new Location(w, x - 4, y + 2, pierZ),
+                    new Location(w, x + 4, y + 5, pierZ + 38),
+                    Material.LIGHT_BLUE_STAINED_GLASS
+            );
+
+            fill(
+                    new Location(w, x - 18, y + 4, tz + 8),
+                    new Location(w, x - 2, y + 5, tz + 18),
+                    Material.SMOOTH_QUARTZ
+            );
+            fill(
+                    new Location(w, x - 16, y + 4, tz + 9),
+                    new Location(w, x - 4, y + 5, tz + 17),
+                    Material.TINTED_GLASS
+            );
+        }
+
+        // Landscaping: trees/planters represented by leaves and dark stems.
+        for (int px = x - tw / 2 - 10; px <= x + tw / 2 + 10; px += 12) {
+            set(new Location(w, px, y + 1, tz - 10), Material.OAK_LOG);
+            fill(
+                    new Location(w, px - 1, y + 2, tz - 11),
+                    new Location(w, px + 1, y + 4, tz - 9),
+                    Material.OAK_LEAVES
+            );
+        }
+    }
+
     private void build(
             Airport airport
     ) {
@@ -1085,6 +1313,7 @@ public class AirportManager implements Listener {
         // -----------------------------------------------------
 
         rebuildGates(airport);
+        buildRealisticAirportDetails(airport);
 
         // -----------------------------------------------------
         // Tower
