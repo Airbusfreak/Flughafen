@@ -2119,7 +2119,7 @@ public class AirportManager implements Listener {
      */
     public void automaticGenerationTick() {
         if (!plugin.getConfig().getBoolean(
-                "airports.automatic-generation", true
+                "airports.automatic-generation.enabled", true
         ) || automaticGenerationBusy) {
             return;
         }
