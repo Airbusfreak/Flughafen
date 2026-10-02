@@ -7,5 +7,22 @@ public class Airport {
     public String id(){return id;} public String name(){return name;} public Location center(){return center;} public int size(){return size;} public List<String> gates(){return Collections.unmodifiableList(gates);}
     public int level(){return level;} public void level(int value){level=Math.max(1,value);}
     public void addGates(int amount){int start=gates.size()+1;for(int i=0;i<amount;i++)gates.add("G"+(start+i));}
-    public Location gate(String gate){int i=gates.indexOf(gate);if(i<0)i=0;double x=center.getX()-18+i*12,z=center.getZ()-12;return new Location(center.getWorld(),x,center.getY()+1,z);}
+    public Location gate(String gate){
+        int i=gates.indexOf(gate);
+        if(i<0)i=0;
+
+        int count=Math.max(1,gates.size());
+        double centeredIndex=i-(count-1)/2.0;
+
+        // Gate row directly in front of the terminal.
+        double x=center.getX()+centeredIndex*11.0;
+        double z=center.getZ()+10.0;
+
+        return new Location(
+                center.getWorld(),
+                x,
+                center.getY()+1,
+                z
+        );
+    }
 }
