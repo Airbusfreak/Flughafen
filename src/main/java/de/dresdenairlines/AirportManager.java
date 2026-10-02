@@ -21,6 +21,12 @@ public class AirportManager implements Listener {
     private final Set<String> villageChecks =
             new HashSet<>();
 
+    /** Grid cells already considered by the exploration-based generator. */
+    private final Set<String> automaticCells =
+            new HashSet<>();
+
+    private boolean automaticGenerationBusy = false;
+
     private final File file;
 
     private YamlConfiguration data;
@@ -642,13 +648,13 @@ public class AirportManager implements Listener {
         for (
                 int px = x - radius;
                 px <= x + radius;
-                px += 2
+                px++
         ) {
 
             for (
                     int pz = z - radius;
                     pz <= z + radius;
-                    pz += 2
+                    pz++
             ) {
 
                 int top =
@@ -859,6 +865,38 @@ public class AirportManager implements Listener {
                 Material.GLASS
         );
 
+        // Simple but complete level-1 terminal shell.
+        fill(
+                new Location(world, x - terminalWidth / 2, y + 3, terminalZ),
+                new Location(world, x + terminalWidth / 2, y + 3, terminalZ + terminalDepth),
+                Material.SMOOTH_QUARTZ
+        );
+
+        fill(
+                new Location(world, x - terminalWidth / 2, y + 2, terminalZ),
+                new Location(world, x - terminalWidth / 2, y + 3, terminalZ + terminalDepth),
+                Material.SMOOTH_QUARTZ
+        );
+
+        fill(
+                new Location(world, x + terminalWidth / 2, y + 2, terminalZ),
+                new Location(world, x + terminalWidth / 2, y + 3, terminalZ + terminalDepth),
+                Material.SMOOTH_QUARTZ
+        );
+
+        // Entrance canopy.
+        fill(
+                new Location(world, x - 8, y + 3, terminalZ - 3),
+                new Location(world, x + 8, y + 3, terminalZ + 1),
+                Material.SMOOTH_QUARTZ
+        );
+
+        fill(
+                new Location(world, x - 6, y + 2, terminalZ - 1),
+                new Location(world, x + 6, y + 2, terminalZ),
+                Material.GLASS
+        );
+
         // -----------------------------------------------------
         // Check-In
         // -----------------------------------------------------
@@ -1001,57 +1039,57 @@ public class AirportManager implements Listener {
         // Gates
         // -----------------------------------------------------
 
-        for (
-                String gateId :
-                airport.gates()
-        ) {
-
-            Location gate =
-                    airport.gate(
-                            gateId
-                    );
-
-            fill(
-                    gate.clone().add(
-                            -5,
-                            0,
-                            -3
-                    ),
-                    gate.clone().add(
-                            5,
-                            0,
-                            3
-                    ),
-                    Material.LIGHT_GRAY_CONCRETE
-            );
-
-            set(
-                    gate.clone().add(
-                            0,
-                            1,
-                            0
-                    ),
-                    Material.SEA_LANTERN
-            );
-
-            // Jetbridge
-
-            fill(
-                    gate.clone().add(
-                            5,
-                            1,
-                            0
-                    ),
-                    gate.clone().add(
-                            12,
-                            2,
-                            1
-                    ),
-                    Material.GLASS
-            );
-        }
+        rebuildGates(airport);
 
         // -----------------------------------------------------
+    /**
+     * Rebuilds every physical gate stand and jet bridge of an airport.
+     * Gate positions remain stable when more gates are added later.
+     */
+    public void rebuildGates(Airport airport) {
+        if (airport == null || airport.center() == null || airport.center().getWorld() == null) {
+            return;
+        }
+
+        for (String gateId : airport.gates()) {
+            buildGate(airport, gateId);
+        }
+    }
+
+    private void buildGate(Airport airport, String gateId) {
+        Location gate = airport.gate(gateId);
+        if (gate == null || gate.getWorld() == null) {
+            return;
+        }
+
+        fill(
+                gate.clone().add(-9, 0, -7),
+                gate.clone().add(9, 0, 7),
+                Material.LIGHT_GRAY_CONCRETE
+        );
+
+        fill(
+                gate.clone().add(-1, 1, -6),
+                gate.clone().add(1, 1, 6),
+                Material.YELLOW_CONCRETE
+        );
+
+        set(gate.clone().add(0, 1, 0), Material.SEA_LANTERN);
+
+        // Glass jet bridge from the stand towards the terminal.
+        fill(
+                gate.clone().add(-2, 1, 2),
+                gate.clone().add(2, 2, 5),
+                Material.GLASS
+        );
+
+        fill(
+                gate.clone().add(-1, 1, 5),
+                gate.clone().add(1, 3, 6),
+                Material.SMOOTH_QUARTZ
+        );
+    }
+
         // Tower
         // -----------------------------------------------------
 
@@ -1575,176 +1613,137 @@ public class AirportManager implements Listener {
             int size,
             int searchRadius
     ) {
+        if (world == null) {
+            return null;
+        }
 
-        int step =
-                Math.max(
-                        8,
-                        plugin.getConfig()
-                                .getInt(
-                                        "airports.terrain-search-step",
-                                        12
-                                )
-                );
+        int step = Math.max(
+                8,
+                plugin.getConfig().getInt("airports.terrain-search-step", 12)
+        );
 
-        double bestScore =
-                Double.MAX_VALUE;
+        int maxHeightDifference = plugin.getConfig().getInt(
+                "airports.max-terrain-height-difference", 8
+        );
 
-        Location best =
-                null;
+        int terminalWidth = plugin.getConfig().getInt(
+                "airports.terminal-width", 55
+        );
 
-        int half =
-                Math.max(
-                        10,
-                        size / 2
-                );
+        int terminalDepth = plugin.getConfig().getInt(
+                "airports.terminal-depth", 35
+        );
 
-        int maxHeightDifference =
-                plugin.getConfig()
-                        .getInt(
-                                "airports.max-terrain-height-difference",
-                                8
-                        );
+        int runwayHalf = Math.max(
+                90,
+                plugin.getConfig().getInt("airports.runway-length", 180) / 2
+        );
 
-        for (
-                int x =
-                        centerX - searchRadius;
+        // Validate the real build footprint: runway + taxiway + apron + terminal.
+        int halfX = Math.max(size + 20, terminalWidth / 2 + 20);
+        int minZ = -size - 35 - runwayHalf - 8;
+        int maxZ = 18 + terminalDepth + 20;
 
-                x <=
-                        centerX + searchRadius;
+        double bestScore = Double.MAX_VALUE;
+        Location best = null;
 
-                x += step
-        ) {
+        for (int x = centerX - searchRadius; x <= centerX + searchRadius; x += step) {
+            for (int z = centerZ - searchRadius; z <= centerZ + searchRadius; z += step) {
 
-            for (
-                    int z =
-                            centerZ - searchRadius;
-
-                    z <=
-                            centerZ + searchRadius;
-
-                    z += step
-            ) {
-
-                if (
-                        !isSuitable(
-                                world,
-                                x,
-                                z
-                        )
-                ) {
-
+                if (!isSuitable(world, x, z)) {
                     continue;
                 }
 
-                int minHeight =
-                        Integer.MAX_VALUE;
+                int minHeight = Integer.MAX_VALUE;
+                int maxHeight = Integer.MIN_VALUE;
+                boolean invalid = false;
+                int sampleStep = Math.max(8, step);
 
-                int maxHeight =
-                        Integer.MIN_VALUE;
+                for (int sx = -halfX; sx <= halfX && !invalid; sx += sampleStep) {
+                    for (int sz = minZ; sz <= maxZ; sz += sampleStep) {
+                        int px = x + sx;
+                        int pz = z + sz;
 
-                boolean water =
-                        false;
+                        if (!isSuitable(world, px, pz)) {
+                            invalid = true;
+                            break;
+                        }
 
-                int sampleStep =
-                        Math.max(
-                                4,
-                                step
-                        );
+                        int height = world.getHighestBlockYAt(px, pz);
+                        Material top = world.getBlockAt(px, height, pz).getType();
 
-                for (
-                        int sx =
-                                -half;
+                        if (top == Material.WATER || top == Material.LAVA) {
+                            invalid = true;
+                            break;
+                        }
 
-                        sx <= half;
+                        minHeight = Math.min(minHeight, height);
+                        maxHeight = Math.max(maxHeight, height);
 
-                        sx += sampleStep
-                ) {
-
-                    for (
-                            int sz =
-                                    -half;
-
-                            sz <= half;
-
-                            sz += sampleStep
-                    ) {
-
-                        int height =
-                                world.getHighestBlockYAt(
-                                        x + sx,
-                                        z + sz
-                                );
-
-                        minHeight =
-                                Math.min(
-                                        minHeight,
-                                        height
-                                );
-
-                        maxHeight =
-                                Math.max(
-                                        maxHeight,
-                                        height
-                                );
-
-                        Material top =
-                                world.getBlockAt(
-                                        x + sx,
-                                        height,
-                                        z + sz
-                                ).getType();
-
-                        if (
-                                top == Material.WATER
-                                        ||
-                                top == Material.LAVA
-                        ) {
-
-                            water = true;
+                        if (maxHeight - minHeight > maxHeightDifference) {
+                            invalid = true;
+                            break;
                         }
                     }
                 }
 
-                int heightDifference =
-                        maxHeight -
-                                minHeight;
-
-                if (
-                        water
-                                ||
-                        heightDifference >
-                                maxHeightDifference
-                ) {
-
+                if (invalid || minHeight == Integer.MAX_VALUE) {
                     continue;
                 }
 
-                double distance =
-                        Math.hypot(
-                                x - centerX,
-                                z - centerZ
-                        );
+                int[][] edges = {
+                        {-halfX, minZ}, {0, minZ}, {halfX, minZ},
+                        {-halfX, maxZ}, {0, maxZ}, {halfX, maxZ},
+                        {-halfX, 0}, {halfX, 0}
+                };
+
+                for (int[] edge : edges) {
+                    int px = x + edge[0];
+                    int pz = z + edge[1];
+
+                    if (!isSuitable(world, px, pz)) {
+                        invalid = true;
+                        break;
+                    }
+
+                    int h = world.getHighestBlockYAt(px, pz);
+                    Material top = world.getBlockAt(px, h, pz).getType();
+
+                    if (top == Material.WATER || top == Material.LAVA) {
+                        invalid = true;
+                        break;
+                    }
+
+                    minHeight = Math.min(minHeight, h);
+                    maxHeight = Math.max(maxHeight, h);
+
+                    if (maxHeight - minHeight > maxHeightDifference) {
+                        invalid = true;
+                        break;
+                    }
+                }
+
+                if (invalid) {
+                    continue;
+                }
+
+                double distance = Math.hypot(
+                        x - centerX,
+                        z - centerZ
+                );
 
                 double score =
-                        distance +
-                                heightDifference *
-                                        25.0;
+                        distance
+                                + (maxHeight - minHeight) * 40.0;
 
-                if (
-                        score <
-                        bestScore
-                ) {
-
-                    bestScore =
-                            score;
-
-                    best =
-                            new Location(
-                                    world,
-                                    x,
-                                    maxHeight + 1,
-                                    z
-                            );
+                if (score < bestScore) {
+                    bestScore = score;
+                    best = new Location(
+                            world,
+                            x,
+                            maxHeight + 1,
+                            z
+                    );
                 }
             }
         }
@@ -1843,129 +1842,211 @@ public class AirportManager implements Listener {
     // /airport generate
     // =========================================================
 
-    public void randomGenerateAround(
+    public boolean randomGenerateAround(
             Location location
     ) {
-
-        if (
-                location == null
-                        ||
-                location.getWorld() == null
-        ) {
-
-            plugin.getLogger().warning(
-                    "Airport generation: ungültige Position."
-            );
-
-            return;
+        if (location == null || location.getWorld() == null) {
+            plugin.getLogger().warning("Airport generation: ungültige Position.");
+            return false;
         }
 
-        if (
-                !worldAllowed(
-                        location.getWorld()
+        if (!worldAllowed(location.getWorld())) {
+            plugin.getLogger().warning(
+                    "Airport generation blockiert: Welt "
+                            + location.getWorld().getName()
+                            + " ist nicht erlaubt."
+            );
+            return false;
+        }
+
+        int size = plugin.getConfig().getInt(
+                "airports.village-generation.size", 45
+        );
+
+        int searchRadius = Math.max(
+                256,
+                plugin.getConfig().getInt(
+                        "airports.terrain-search-radius", 192
                 )
-        ) {
+        );
 
-            plugin.getLogger().warning(
-                    "Airport generation blockiert: Welt " +
-                            location.getWorld().getName() +
-                            " ist nicht erlaubt."
+        return generateRegionalAirport(
+                location,
+                size,
+                searchRadius,
+                "Regional Airport"
+        );
+    }
+
+    /**
+     * Automatic airport generation while players explore the world.
+     * Each grid cell is checked at most once per server session.
+     */
+    public void automaticGenerationTick() {
+        if (!plugin.getConfig().getBoolean(
+                "airports.automatic-generation", true
+        ) || automaticGenerationBusy) {
+            return;
+        }
+
+        int gridSize = Math.max(
+                512,
+                plugin.getConfig().getInt("airports.grid-size", 4096)
+        );
+
+        double chance = Math.max(
+                0.0,
+                Math.min(
+                        1.0,
+                        plugin.getConfig().getDouble(
+                                "airports.generation-chance", 0.22
+                        )
+                )
+        );
+
+        for (org.bukkit.entity.Player player : Bukkit.getOnlinePlayers()) {
+            Location loc = player.getLocation();
+
+            if (!worldAllowed(loc.getWorld())) {
+                continue;
+            }
+
+            long cellX = Math.floorDiv(loc.getBlockX(), gridSize);
+            long cellZ = Math.floorDiv(loc.getBlockZ(), gridSize);
+
+            String cellKey =
+                    loc.getWorld().getUID()
+                            + ":" + cellX
+                            + ":" + cellZ;
+
+            if (!automaticCells.add(cellKey)) {
+                continue;
+            }
+
+            long seed =
+                    loc.getWorld().getSeed()
+                            ^ (cellX * 341873128712L)
+                            ^ (cellZ * 132897987541L);
+
+            if (new Random(seed).nextDouble() > chance) {
+                continue;
+            }
+
+            automaticGenerationBusy = true;
+
+            Bukkit.getScheduler().runTask(
+                    plugin,
+                    () -> {
+                        try {
+                            int size = plugin.getConfig().getInt(
+                                    "airports.automatic-generation.size",
+                                    plugin.getConfig().getInt(
+                                            "airports.village-generation.size",
+                                            45
+                                    )
+                            );
+
+                            int radius = Math.max(
+                                    256,
+                                    plugin.getConfig().getInt(
+                                            "airports.automatic-generation.search-radius",
+                                            320
+                                    )
+                            );
+
+                            generateRegionalAirport(
+                                    loc,
+                                    size,
+                                    radius,
+                                    "Regional Airport"
+                            );
+                        } finally {
+                            automaticGenerationBusy = false;
+                        }
+                    }
             );
 
             return;
         }
+    }
 
-        double minimumDistance =
-                plugin.getConfig()
-                        .getDouble(
-                                "airports.minimum-distance",
-                                1800
-                        );
+    private boolean generateRegionalAirport(
+            Location location,
+            int size,
+            int searchRadius,
+            String name
+    ) {
+        if (location == null || location.getWorld() == null) {
+            return false;
+        }
 
-        boolean tooClose =
-                airports
-                        .values()
-                        .stream()
-                        .anyMatch(
-                                airport ->
-                                        airport.center()
-                                                .getWorld()
-                                                ==
-                                                location.getWorld()
-                                                &&
-                                        airport.center()
-                                                .distance(
-                                                        location
-                                                )
-                                                <
-                                                minimumDistance
-                        );
+        World world = location.getWorld();
+
+        double minimumDistance = plugin.getConfig().getDouble(
+                "airports.minimum-distance", 1800
+        );
+
+        boolean tooClose = airports.values().stream().anyMatch(
+                airport ->
+                        airport != null
+                                && airport.center() != null
+                                && airport.center().getWorld() == world
+                                && airport.center().distance(location)
+                                < minimumDistance
+        );
 
         if (tooClose) {
-
             plugin.getLogger().info(
-                    "Airport generation übersprungen: " +
-                            "Ein Flughafen befindet sich bereits " +
-                            "innerhalb von " +
-                            (int) minimumDistance +
-                            " Blöcken."
+                    "Airport generation skipped: another airport is within "
+                            + (int) minimumDistance
+                            + " blocks."
             );
-
-            return;
+            return false;
         }
 
-        int size =
-                plugin.getConfig()
-                        .getInt(
-                                "airports.village-generation.size",
-                                45
-                        );
-
-        int searchRadius =
-                Math.max(
-                        256,
-                        plugin.getConfig()
-                                .getInt(
-                                        "airports.terrain-search-radius",
-                                        192
-                                )
-                );
-
-        Location site =
-                bestSite(
-                        location.getWorld(),
-                        location.getBlockX(),
-                        location.getBlockZ(),
-                        size,
-                        searchRadius
-                );
+        Location site = bestSite(
+                world,
+                location.getBlockX(),
+                location.getBlockZ(),
+                size,
+                searchRadius
+        );
 
         if (site == null) {
-
             plugin.getLogger().warning(
-                    "Kein geeignetes Terrain für einen " +
-                            "Flughafen gefunden."
+                    "Kein geeignetes Terrain für einen Flughafen gefunden."
             );
-
-            return;
+            return false;
         }
 
-        String id =
-                uniqueRegionalId(
-                        site.getBlockX(),
-                        site.getBlockZ()
-                );
+        String id = uniqueRegionalId(
+                site.getBlockX(),
+                site.getBlockZ()
+        );
 
-        createAirport(
+        Airport airport = createAirport(
                 id,
-                "Regional Airport",
+                name,
                 site,
                 size
         );
 
+        if (airport == null) {
+            return false;
+        }
+
         plugin.getLogger().info(
-                "Manueller Flughafen erstellt: " +
-                        id
+                "Regional airport created: "
+                        + id
+                        + " at "
+                        + site.getBlockX()
+                        + ","
+                        + site.getBlockY()
+                        + ","
+                        + site.getBlockZ()
         );
+
+        return true;
     }
+
 }
