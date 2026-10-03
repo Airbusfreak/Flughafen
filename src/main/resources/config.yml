@@ -13,8 +13,8 @@ airports:
   terrain-search-step: 12
   max-terrain-height-difference: 8
   runway-length: 180
-  terminal-width: 55
-  terminal-depth: 35
+  terminal-width: 65
+  terminal-depth: 48
   village-generation:
     enabled: true
     chance: 0.16
