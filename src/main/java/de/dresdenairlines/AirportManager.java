@@ -684,6 +684,7 @@ public class AirportManager implements Listener {
         }
         rebuildGates(airport);
         buildRealisticAirportDetails(airport);
+        buildAdvancedInteriorDetails(airport);
     }
 
     /**
@@ -1004,6 +1005,208 @@ public class AirportManager implements Listener {
             fill(new Location(w, px - 1, y + 2, tz - 11),
                  new Location(w, px + 1, y + 4, tz - 9),
                  Material.OAK_LEAVES);
+        }
+    }
+
+
+    /**
+     * Fine interior pass: passenger circulation, immigration, restrooms,
+     * retail, seating, service access and realistic terminal furniture.
+     */
+    private void buildAdvancedInteriorDetails(Airport airport) {
+        Location c = airport.center();
+        World w = c.getWorld();
+        int x = c.getBlockX();
+        int y = c.getBlockY();
+        int z = c.getBlockZ();
+        int tw = plugin.getConfig().getInt("airports.terminal-width", 65);
+        int td = plugin.getConfig().getInt("airports.terminal-depth", 48);
+        int tz = z + 18;
+        int floor = y + 1;
+
+        // ---------------- LAND SIDE: ticketing / customer service ----------------
+        int ticketZ = tz + 6;
+        fill(new Location(w, x - 23, floor + 1, ticketZ),
+             new Location(w, x - 5, floor + 1, ticketZ + 2),
+             Material.SMOOTH_QUARTZ);
+        for (int px = x - 21; px <= x - 7; px += 4) {
+            fill(new Location(w, px, floor + 2, ticketZ),
+                 new Location(w, px + 2, floor + 3, ticketZ + 1),
+                 Material.GRAY_CONCRETE);
+            set(new Location(w, px + 1, floor + 4, ticketZ), Material.BLACK_CONCRETE);
+            set(new Location(w, px + 1, floor + 5, ticketZ), Material.LIGHT_BLUE_STAINED_GLASS);
+        }
+
+        // Information desk with passenger-facing counter.
+        fill(new Location(w, x + 7, floor + 1, ticketZ),
+             new Location(w, x + 15, floor + 2, ticketZ + 2),
+             Material.DARK_OAK_PLANKS);
+        fill(new Location(w, x + 8, floor + 3, ticketZ),
+             new Location(w, x + 14, floor + 4, ticketZ),
+             Material.BLACK_CONCRETE);
+        for (int px = x + 9; px <= x + 13; px += 2) {
+            set(new Location(w, px, floor + 5, ticketZ), Material.SEA_LANTERN);
+        }
+
+        // ---------------- SECURITY DETAIL ----------------
+        int securityZ = tz + 20;
+        for (int lane = 0; lane < 5; lane++) {
+            int lx = x - 20 + lane * 10;
+            fill(new Location(w, lx, floor + 1, securityZ),
+                 new Location(w, lx + 6, floor + 1, securityZ + 1),
+                 Material.IRON_BLOCK);
+            // conveyor / scanner
+            fill(new Location(w, lx + 1, floor + 2, securityZ + 1),
+                 new Location(w, lx + 4, floor + 2, securityZ + 3),
+                 Material.BLACK_CONCRETE);
+            // tray return
+            fill(new Location(w, lx + 1, floor + 2, securityZ + 4),
+                 new Location(w, lx + 4, floor + 2, securityZ + 4),
+                 Material.LIGHT_GRAY_CONCRETE);
+            // walk-through detector
+            fill(new Location(w, lx, floor + 2, securityZ + 5),
+                 new Location(w, lx + 5, floor + 4, securityZ + 5),
+                 Material.IRON_BARS);
+        }
+
+        // Queue serpentine barriers.
+        for (int q = 0; q < 6; q++) {
+            int qx = x - 25 + q * 10;
+            set(new Location(w, qx, floor + 1, securityZ - 5), Material.IRON_BARS);
+            set(new Location(w, qx + 5, floor + 1, securityZ - 5), Material.IRON_BARS);
+            set(new Location(w, qx, floor + 1, securityZ - 3), Material.IRON_BARS);
+            set(new Location(w, qx + 5, floor + 1, securityZ - 3), Material.IRON_BARS);
+        }
+
+        // ---------------- AIRSIDE MAIN CONCOURSE ----------------
+        int concourseZ = tz + 27;
+        fill(new Location(w, x - 28, floor, concourseZ),
+             new Location(w, x + 28, floor, concourseZ + 3),
+             Material.LIGHT_GRAY_CONCRETE);
+        for (int px = x - 25; px <= x + 23; px += 8) {
+            // charging table
+            fill(new Location(w, px, floor + 1, concourseZ + 1),
+                 new Location(w, px + 4, floor + 1, concourseZ + 2),
+                 Material.DARK_OAK_PLANKS);
+            set(new Location(w, px + 2, floor + 2, concourseZ + 1), Material.SEA_LANTERN);
+            // paired seats
+            set(new Location(w, px, floor + 1, concourseZ + 3), Material.DARK_OAK_STAIRS);
+            set(new Location(w, px + 1, floor + 1, concourseZ + 3), Material.DARK_OAK_STAIRS);
+        }
+
+        // ---------------- RESTROOMS WITH INDIVIDUAL STALLS ----------------
+        int wcX = x + 20;
+        int wcZ = tz + 30;
+        fill(new Location(w, wcX - 7, floor + 1, wcZ),
+             new Location(w, wcX + 7, floor + 4, wcZ + 8),
+             Material.QUARTZ_BLOCK);
+        for (int stall = 0; stall < 4; stall++) {
+            int sx = wcX - 5 + stall * 3;
+            fill(new Location(w, sx, floor + 2, wcZ + 2),
+                 new Location(w, sx + 1, floor + 2, wcZ + 5),
+                 Material.LIGHT_GRAY_CONCRETE);
+            set(new Location(w, sx, floor + 3, wcZ + 2), Material.IRON_DOOR);
+            set(new Location(w, sx + 1, floor + 3, wcZ + 5), Material.SMOOTH_STONE);
+        }
+        // sinks / mirrors
+        fill(new Location(w, wcX - 5, floor + 2, wcZ + 7),
+             new Location(w, wcX + 5, floor + 2, wcZ + 7),
+             Material.QUARTZ_SLAB);
+        fill(new Location(w, wcX - 5, floor + 3, wcZ + 8),
+             new Location(w, wcX + 5, floor + 4, wcZ + 8),
+             Material.GLASS);
+
+        // ---------------- SHOPS / CAFES ----------------
+        for (int i = 0; i < 3; i++) {
+            int sx = x - 17 + i * 12;
+            int sz = tz + 29;
+            fill(new Location(w, sx, floor + 1, sz),
+                 new Location(w, sx + 8, floor + 4, sz + 5),
+                 Material.SMOOTH_QUARTZ);
+            fill(new Location(w, sx + 1, floor + 2, sz),
+                 new Location(w, sx + 7, floor + 3, sz),
+                 Material.GLASS);
+            fill(new Location(w, sx + 2, floor + 1, sz + 4),
+                 new Location(w, sx + 6, floor + 2, sz + 4),
+                 Material.DARK_OAK_PLANKS);
+            set(new Location(w, sx + 4, floor + 4, sz), Material.SEA_LANTERN);
+            // shelves / display islands
+            for (int shelf = 0; shelf < 3; shelf++) {
+                set(new Location(w, sx + 2 + shelf * 2, floor + 2, sz + 2), Material.BARREL);
+            }
+        }
+
+        // ---------------- IMMIGRATION / PASSPORT CONTROL ----------------
+        int passportZ = tz + td - 10;
+        fill(new Location(w, x - 22, floor + 1, passportZ),
+             new Location(w, x + 22, floor + 1, passportZ + 2),
+             Material.BLACK_CONCRETE);
+        for (int booth = 0; booth < 6; booth++) {
+            int bx = x - 21 + booth * 8;
+            fill(new Location(w, bx, floor + 2, passportZ),
+                 new Location(w, bx + 5, floor + 4, passportZ + 2),
+                 Material.GLASS);
+            fill(new Location(w, bx + 1, floor + 2, passportZ + 1),
+                 new Location(w, bx + 4, floor + 2, passportZ + 1),
+                 Material.DARK_OAK_PLANKS);
+            set(new Location(w, bx + 2, floor + 3, passportZ + 1), Material.SEA_LANTERN);
+        }
+
+        // ---------------- BAGGAGE CART / SERVICE ZONE ----------------
+        int serviceZ = tz + td - 3;
+        for (int cart = 0; cart < 4; cart++) {
+            int cx = x - 18 + cart * 12;
+            fill(new Location(w, cx, floor + 1, serviceZ),
+                 new Location(w, cx + 6, floor + 2, serviceZ + 2),
+                 Material.IRON_BLOCK);
+            set(new Location(w, cx + 1, floor + 1, serviceZ + 2), Material.IRON_BARS);
+            set(new Location(w, cx + 5, floor + 1, serviceZ + 2), Material.IRON_BARS);
+        }
+
+        // ---------------- VERTICAL CIRCULATION ----------------
+        // Escalator pair: one up, one down.
+        for (int i = 0; i < 8; i++) {
+            set(new Location(w, x - 6 + i, floor + 1 + i / 3, tz + 24 + i / 2), Material.POLISHED_ANDESITE);
+            set(new Location(w, x + 7 + i, floor + 1 + i / 3, tz + 24 + i / 2), Material.POLISHED_ANDESITE);
+        }
+        fill(new Location(w, x - 8, floor + 1, tz + 24),
+             new Location(w, x - 1, floor + 2, tz + 29),
+             Material.GLASS);
+        fill(new Location(w, x + 6, floor + 1, tz + 24),
+             new Location(w, x + 13, floor + 2, tz + 29),
+             Material.GLASS);
+
+        // Elevator core.
+        fill(new Location(w, x + 14, floor + 1, tz + 18),
+             new Location(w, x + 18, floor + 7, tz + 23),
+             Material.SMOOTH_QUARTZ);
+        fill(new Location(w, x + 15, floor + 2, tz + 18),
+             new Location(w, x + 17, floor + 5, tz + 18),
+             Material.TINTED_GLASS);
+
+        // ---------------- GATE LOUNGE FURNITURE / BOARDING AREA ----------------
+        for (String gateId : airport.gates()) {
+            Location gate = airport.gate(gateId);
+            if (gate == null) continue;
+            int gx = gate.getBlockX();
+            int gz = gate.getBlockZ();
+
+            // Waiting rows facing the gate.
+            for (int row = 0; row < 3; row++) {
+                for (int seat = -3; seat <= 3; seat += 2) {
+                    set(new Location(w, gx + seat, floor + 1, gz + 12 + row * 3), Material.DARK_OAK_STAIRS);
+                }
+            }
+            // Boarding queue posts and rope line.
+            for (int p = -3; p <= 3; p += 3) {
+                set(new Location(w, gx + p, floor + 1, gz + 18), Material.IRON_BARS);
+                set(new Location(w, gx + p, floor + 2, gz + 18), Material.LIGHT_BLUE_STAINED_GLASS);
+            }
+            // Small gate service counter.
+            fill(new Location(w, gx - 3, floor + 1, gz + 19),
+                 new Location(w, gx + 3, floor + 2, gz + 20),
+                 Material.GRAY_CONCRETE);
+            set(new Location(w, gx, floor + 3, gz + 19), Material.SEA_LANTERN);
         }
     }
 
@@ -1433,6 +1636,7 @@ public class AirportManager implements Listener {
 
         rebuildGates(airport);
         buildRealisticAirportDetails(airport);
+        buildAdvancedInteriorDetails(airport);
 
         // -----------------------------------------------------
         // Tower
