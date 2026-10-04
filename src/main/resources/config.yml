@@ -102,3 +102,7 @@ baggage:
 
 ranking:
   enabled: true
+
+employees:
+  enabled: true
+  salary-interval-seconds: 3600
