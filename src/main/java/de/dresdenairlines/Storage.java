@@ -20,7 +20,7 @@ public class Storage {
                 String[] q=id.split("\\|",-1);
                 if(q.length>=6)a.fleet.add(new Aircraft(q[0],q[1],q[2],q[3],Integer.parseInt(q[4]),Integer.parseInt(q[5])));
             }
-            for(String r:y.getStringList(k+".routes")){
+            for(String e:y.getStringList(k+".employees")){\n                String[] q=e.split("\\|",-1);\n                if(q.length>=8){\n                    try{a.employees.add(new Employee(UUID.fromString(q[0]),q[1],q[2],Integer.parseInt(q[3]),Double.parseDouble(q[4]),Integer.parseInt(q[5]),q[6],Long.parseLong(q[7])));}catch(Exception ignored){}\n                }\n            }\n            for(String r:y.getStringList(k+".routes")){
                 String[] q=r.split("\\|",-1);
                 if(q.length>=5){Route rt=new Route(q[0],q[1],q[2],Integer.parseInt(q[3]),Integer.parseInt(q[4]));if(q.length>=6)rt.lastScheduledAt=Long.parseLong(q[5]);a.routes.add(rt);}
             }
@@ -34,7 +34,7 @@ public class Storage {
             y.set(k+".money",a.money);y.set(k+".reputation",a.reputation);
             List<String> ac=new ArrayList<>();for(Aircraft x:a.fleet)
                 ac.add(String.join("|",x.id,x.type,x.model,x.registration,""+x.seats,""+x.range));
-            y.set(k+".aircraft",ac);
+            y.set(k+".aircraft",ac);\n            List<String> ee=new ArrayList<>();for(Employee e:a.employees)\n                ee.add(String.join("|",e.id.toString(),e.name,e.role,""+e.skill,""+e.salary,""+e.level,e.assignedAirport,""+e.lastPaidAt));\n            y.set(k+".employees",ee);
             List<String> rr=new ArrayList<>();for(Route r:a.routes)
                 rr.add(String.join("|",r.from,r.to,r.aircraftId,""+r.ticketPrice,""+r.frequencySeconds,""+r.lastScheduledAt));
             y.set(k+".routes",rr);
