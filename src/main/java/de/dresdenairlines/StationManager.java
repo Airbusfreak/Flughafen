@@ -4,9 +4,7 @@ import org.bukkit.*;
 import org.bukkit.block.data.Rail;
 import org.bukkit.entity.Minecart;
 import org.bukkit.event.*;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
@@ -736,105 +734,44 @@ public final class StationManager implements Listener {
     }
 
     public void tick() {
-
         if (!plugin.getConfig().getBoolean(
-                "railways.minecart-service.enabled",
-                true
-        )) {
-            return;
-        }
+                "railways.minecart-service.enabled", true)) return;
 
-        long interval =
-                plugin.getConfig().getLong(
-                        "railways.minecart-service.interval-seconds",
-                        120
-                ) * 1000L;
+        long interval = plugin.getConfig().getLong(
+                "railways.minecart-service.interval-seconds", 120) * 1000L;
 
         long now = System.currentTimeMillis();
         for (Station s : stations.values()) {
             long last = lastServiceAt.getOrDefault(s.id(), 0L);
             if (last == 0L || now - last >= interval) {
-                spawnCart(s);
+                // Automatic, free local shuttle: village -> airport and airport -> village.
+                spawnCart(s.station().clone().add(0, 0, -1),
+                        "Nahverkehr → Flughafen " + s.airportId());
+                spawnCart(s.airportRail(),
+                        "Nahverkehr → Dorf " + s.name());
                 lastServiceAt.put(s.id(), now);
             }
         }
     }
 
-    private void spawnCart(
-            Station s
-    ) {
-        World w =
-                s.station().getWorld();
-
-        Location l =
-                s.station()
-                        .clone()
-                        .add(0, 0, -1);
-
-        Minecart c =
-                w.spawn(
-                        l,
-                        Minecart.class
-                );
-
+    private void spawnCart(Location l, String name) {
+        if (l == null || l.getWorld() == null) return;
+        Minecart c = l.getWorld().spawn(l, Minecart.class);
         c.setMaxSpeed(0.6);
-
-        c.setCustomName(
-                "Lorenbahn → "
-                        + s.airportId()
-        );
-
+        c.setCustomName(name);
         c.setCustomNameVisible(true);
     }
 
-    @EventHandler(ignoreCancelled = true)
-    public void onInteract(
-            PlayerInteractEvent e
-    ) {
-        if (
-                e.getHand()
-                        != EquipmentSlot.HAND
-        ) {
-            return;
-        }
-
-        if (e.getAction().isLeftClick()) {
-            return;
-        }
-
-        if (
-                e.getClickedBlock() == null
-                        ||
-                e.getClickedBlock().getType()
-                        != Material.STONE_BUTTON
-        ) {
-            return;
-        }
-
-        Location l =
-                e.getClickedBlock()
-                        .getLocation();
-
-        for (Station s : stations.values()) {
-
-            if (
-                    s.station()
-                            .distanceSquared(l)
-                            < 36
-            ) {
-
-                spawnCart(s);
-
-                e.getPlayer().sendMessage(
-                        "§aLorenbahn fährt zum Flughafen."
-                );
-
-                break;
-            }
-        }
+    public long secondsUntilNextDeparture(Station s) {
+        long interval = plugin.getConfig().getLong(
+                "railways.minecart-service.interval-seconds", 120);
+        long last = lastServiceAt.getOrDefault(s.id(), 0L);
+        if (last == 0L) return 0L;
+        return Math.max(0L,
+                interval - (System.currentTimeMillis() - last) / 1000L);
     }
 
-    public long secondsUntilNextDeparture(Station s) {\n        long interval = plugin.getConfig().getLong("railways.minecart-service.interval-seconds", 120);\n        long last = lastServiceAt.getOrDefault(s.id(), 0L);\n        if (last == 0L) return 0L;\n        return Math.max(0L, interval - (System.currentTimeMillis() - last) / 1000L);\n    }\n\n    public record Station(
+    public record Station(
             String id,
             String name,
             String airportId,
