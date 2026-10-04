@@ -28,6 +28,8 @@ public final class StationManager implements Listener {
     private final Set<String> villageChecks =
             new HashSet<>();
 
+    private final Map<String, Long> lastServiceAt = new HashMap<>();
+
     StationManager(DresdenAirlines p) {
         plugin = p;
         file = new File(
@@ -748,12 +750,12 @@ public final class StationManager implements Listener {
                         120
                 ) * 1000L;
 
-        if (
-                System.currentTimeMillis()
-                        % interval < 1000
-        ) {
-            for (Station s : stations.values()) {
+        long now = System.currentTimeMillis();
+        for (Station s : stations.values()) {
+            long last = lastServiceAt.getOrDefault(s.id(), 0L);
+            if (last == 0L || now - last >= interval) {
                 spawnCart(s);
+                lastServiceAt.put(s.id(), now);
             }
         }
     }
@@ -832,7 +834,7 @@ public final class StationManager implements Listener {
         }
     }
 
-    public record Station(
+    public long secondsUntilNextDeparture(Station s) {\n        long interval = plugin.getConfig().getLong("railways.minecart-service.interval-seconds", 120);\n        long last = lastServiceAt.getOrDefault(s.id(), 0L);\n        if (last == 0L) return 0L;\n        return Math.max(0L, interval - (System.currentTimeMillis() - last) / 1000L);\n    }\n\n    public record Station(
             String id,
             String name,
             String airportId,
