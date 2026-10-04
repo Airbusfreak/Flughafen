@@ -33,15 +33,12 @@ public final class AirportGUI implements Listener {
 
     public void open(Player player) {
         Inventory inv = Bukkit.createInventory(null, 54, "✈ DresdenAirlines – Flughäfen");
-
         inv.setItem(4, item(Material.SUNFLOWER, "§6Flughafen-Zentrale",
-                "§7Alle Flughäfen verwalten",
-                "§7Infos, Positionen und Bahnhöfe"));
-        inv.setItem(49, item(Material.COMPASS, "§bFlughäfen neu laden",
-                "§7Aktuelle Flughafenliste anzeigen"));
-        inv.setItem(51, item(Material.EMERALD, "§aFlughafen generieren",
-                "§7Sucht einen geeigneten Standort",
-                "§7in deiner aktuellen Umgebung"));
+                "§7Alle Flughäfen verwalten", "§7Infos, Positionen und Bahnhöfe"));
+        inv.setItem(49, item(Material.COMPASS, "§bFlughafenliste aktualisieren",
+                "§7Aktuelle gespeicherte Flughäfen anzeigen"));
+        inv.setItem(51, item(Material.EMERALD, "§aFlughafengenerierung anstoßen",
+                "§7Startet die automatische Generierung", "§7für erkundete Bereiche"));
         inv.setItem(53, item(Material.RAIL, "§eBahnhöfe",
                 "§7Zeigt die generierten Dorf-Bahnhöfe"));
 
@@ -64,8 +61,7 @@ public final class AirportGUI implements Listener {
         selectedAirport.put(player.getUniqueId(), airport.id());
         Inventory inv = Bukkit.createInventory(null, 27, "✈ Flughafen: " + airport.id());
         inv.setItem(4, item(Material.BEACON, "§b" + airport.name(),
-                "§7ID: §f" + airport.id(),
-                "§7Level: §e" + airport.level(),
+                "§7ID: §f" + airport.id(), "§7Level: §e" + airport.level(),
                 "§7Gates: §f" + airport.gates().size(),
                 "§7Passagiere: §f" + p.airportLevels.passengers(airport.id()),
                 "§7Nachfrage: §e" + String.format(Locale.US, "%.0f", p.airportLevels.demandIndex(airport)) + "%"));
@@ -87,10 +83,8 @@ public final class AirportGUI implements Listener {
         int slot = 10;
         for (Station station : p.stations.stations.values()) {
             if (slot >= 45) break;
-            inv.setItem(slot, item(Material.POWERED_RAIL,
-                    "§e🚆 " + station.name(),
-                    "§7ID: §f" + station.id(),
-                    "§7Flughafen: §b" + station.airportId(),
+            inv.setItem(slot, item(Material.POWERED_RAIL, "§e🚆 " + station.name(),
+                    "§7ID: §f" + station.id(), "§7Flughafen: §b" + station.airportId(),
                     "§aKlicke zum Teleportieren"));
             slot++;
         }
@@ -109,12 +103,8 @@ public final class AirportGUI implements Listener {
 
         if (title.equals("✈ DresdenAirlines – Flughäfen")) {
             if (e.getRawSlot() == 51) {
-                Airport airport = p.airports.randomGenerateAround(player.getLocation());
-                if (airport == null) {
-                    player.sendMessage("§cIn deiner Umgebung konnte kein geeigneter Flughafenstandort gefunden werden.");
-                } else {
-                    player.sendMessage("§aFlughafen §b" + airport.id() + " §aerfolgreich generiert.");
-                }
+                p.airports.automaticGenerationTick();
+                player.sendMessage("§aDie automatische Flughafengenerierung wurde angestoßen.");
                 open(player);
                 return;
             }
