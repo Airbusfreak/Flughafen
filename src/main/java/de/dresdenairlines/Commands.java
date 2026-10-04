@@ -1242,36 +1242,7 @@ public final class Commands implements CommandExecutor, TabCompleter {
                         return true;
                     }
 
-                    player.sendMessage(
-                            ChatColor.GOLD +
-                                    "=== Flughafensystem-Bahnhöfe ==="
-                    );
-
-                    for (
-                            StationManager.Station station :
-                            p.stations.stations.values()
-                    ) {
-
-                        Location location =
-                                station.station();
-
-                        player.sendMessage(
-                                ChatColor.AQUA +
-                                        station.id() +
-                                        ChatColor.GRAY +
-                                        " - " +
-                                        station.name() +
-                                        ChatColor.DARK_GRAY +
-                                        " [" +
-                                        location.getBlockX() +
-                                        ", " +
-                                        location.getBlockY() +
-                                        ", " +
-                                        location.getBlockZ() +
-                                        "]"
-                        );
-                    }
-
+                    p.transitGUI.open(player);
                     return true;
                 }
 
