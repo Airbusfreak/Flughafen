@@ -83,6 +83,9 @@ railways:
   minecart-service:
     enabled: true
     interval-seconds: 120
+    free: true
+    player-operated: false
+    long-distance: false
 
 
 airport-levels:
