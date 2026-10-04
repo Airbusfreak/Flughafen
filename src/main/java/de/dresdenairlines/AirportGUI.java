@@ -50,6 +50,7 @@ public final class AirportGUI implements Listener {
             slot++;
         }
         inv.setItem(49, item(Material.ARROW, "§cHauptmenü"));
+        inv.setItem(51, item(Material.MINECART, "§b🚋 Nahverkehr", "§7Automatischer, kostenloser Dorf-Shuttle", "§7Keine Spieler können Linien betreiben."));
         player.openInventory(inv);
     }
 
@@ -58,6 +59,10 @@ public final class AirportGUI implements Listener {
         if (!e.getView().getTitle().equals("✈ DresdenAirlines – Flughäfen")) return;
         e.setCancelled(true);
         if (!(e.getWhoClicked() instanceof Player player)) return;
+        if (e.getRawSlot() == 51) {
+            p.transitGUI.open(player);
+            return;
+        }
         if (e.getRawSlot() == 49) {
             p.flightGUI.open(player);
             return;
