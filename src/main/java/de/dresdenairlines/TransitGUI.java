@@ -25,16 +25,19 @@ public final class TransitGUI implements Listener {
     }
 
     public void open(Player player){
-        Inventory inv=Bukkit.createInventory(null,54,"🚋 DresdenAirlines – Nahverkehr");
-        inv.setItem(4,item(Material.POWERED_RAIL,"§6Nahverkehr","§7Automatischer Flughafen-Shuttle","§aKostenlos §8• §7kein Spielerbetrieb","§7Nur lokale Dorf ↔ Flughafen-Verbindungen"));
+        Inventory inv=Bukkit.createInventory(null,54,"DresdenAirlines - Nahverkehr");
+        inv.setItem(4,item(Material.POWERED_RAIL,"§6Nahverkehr",
+                "§7Automatischer Flughafen-Shuttle",
+                "§aKostenlos §8• §7kein Spielerbetrieb",
+                "§7Nur lokale Dorf ↔ Flughafen-Verbindungen"));
 
         int slot=10;
         for(StationManager.Station s:p.stations.stations.values()){
-            if(slot>=45) break;
+            if(slot>=45)break;
             long next=p.stations.secondsUntilNextDeparture(s);
             String nextText=next==0?"§ajetzt / beim nächsten Takt":("§e"+next+" s");
             inv.setItem(slot++,item(Material.MINECART,
-                    "§b🚋 "+s.name(),
+                    "§b"+s.name(),
                     "§7Flughafen: §f"+s.airportId(),
                     "§7Nächster Shuttle-Takt: "+nextText,
                     "§7Hinweg: §fDorf → Flughafen",
@@ -48,9 +51,9 @@ public final class TransitGUI implements Listener {
 
     @EventHandler
     public void click(InventoryClickEvent e){
-        if(!e.getView().getTitle().equals("🚋 DresdenAirlines – Nahverkehr")) return;
+        if(!e.getView().getTitle().equals("DresdenAirlines - Nahverkehr"))return;
         e.setCancelled(true);
-        if(!(e.getWhoClicked() instanceof Player player)) return;
-        if(e.getRawSlot()==49) p.airportGUI.open(player);
+        if(!(e.getWhoClicked() instanceof Player player))return;
+        if(e.getRawSlot()==49)p.airportGUI.open(player);
     }
 }
