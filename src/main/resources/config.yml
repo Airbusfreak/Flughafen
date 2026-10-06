@@ -44,6 +44,10 @@ passengers:
   enabled: true
   starting-money: 10000
   offline-no-show-refund-percent: 50
+  cinematic-camera:
+    enabled: true
+    distance-behind: 18
+    height-above-aircraft: 9
   npc-simulation:
     enabled: true
     spawn-before-departure-seconds: 30
@@ -86,7 +90,6 @@ railways:
     free: true
     player-operated: false
     long-distance: false
-
 
 airport-levels:
   enabled: true
