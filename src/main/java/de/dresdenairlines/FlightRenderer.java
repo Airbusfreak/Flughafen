@@ -186,7 +186,7 @@ public final class FlightRenderer {
 
             double bezierT = smooth(u);
             Location loc = cubicBezier(p0, c1, c2, p3, bezierT);
-            Vector tangent = tangentBezier(p0, p1(c1), p2(c2), p3, bezierT);
+            Vector tangent = tangentBezier(p0, c1, c2, p3, bezierT);
 
             float pitch = (float) lerp(6.0, 2.5, u);
             float bank = (float) (Math.sin(u * Math.PI * 2)
@@ -290,14 +290,6 @@ public final class FlightRenderer {
                 .add(p3.toVector().subtract(p2.toVector()).multiply(3 * t * t));
     }
 
-    private Location p1(Location location) {
-        return location;
-    }
-
-    private Location p2(Location location) {
-        return location;
-    }
-
     public void tick() {
         Set<String> seen = new HashSet<>();
 
@@ -318,6 +310,7 @@ public final class FlightRenderer {
                 d = loc.getWorld().spawn(loc, ItemDisplay.class);
                 d.setPersistent(false);
                 d.setItemStack(aircraftItem(f.aircraft.model, f.aircraft.type));
+                d.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.FIXED);
                 d.setTeleportDuration(1);
                 d.setInterpolationDuration(2);
                 d.setInterpolationDelay(0);
