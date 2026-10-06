@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.UUID;
 public class Flight {
     public final String id; public final Airline airline; public final Aircraft aircraft; public final Airport from,to;
-    public final int baseFare,capacity; public int ticketPrice; public int booked; public int npcBooked;
+    public int baseFare,capacity; public int ticketPrice; public int booked; public int npcBooked;
     public double demandScore; public int targetNpcPassengers;
     public final Map<UUID, Passenger> passengers = new LinkedHashMap<>();
     public FlightStatus status=FlightStatus.SCHEDULED;
