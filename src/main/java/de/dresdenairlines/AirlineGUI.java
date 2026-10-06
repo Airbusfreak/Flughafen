@@ -50,7 +50,7 @@ public class AirlineGUI implements Listener {
                 "§7Kontostand: §a"+String.format("%.0f",a.money)+" $"));
         inv.setItem(24,item(Material.GOLD_BLOCK,"§6Rangliste",
                 "§7Serverweite Airline-Rangliste"));
-        inv.setItem(31,item(Material.INFORMATION,"§bSysteminfo",
+        inv.setItem(31,item(Material.BOOK,"§bSysteminfo",
                 "§7Airbus & Embraer werden verwendet.",
                 "§7Flüge haben Abfertigung, Gepäck und Zufallsereignisse."));
         pl.openInventory(inv);
