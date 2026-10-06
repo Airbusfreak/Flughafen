@@ -18,6 +18,6 @@ public final class AirlineManager {
   if(f.status==FlightStatus.TAXIING&&now>=f.departureAt){f.status=FlightStatus.DEPARTED;p.gates.releaseDeparture(f);double dist=f.from.center().distance(f.to.center())/100.0;double costs=p.getConfig().getDouble("economy.landing-fee")+dist*p.getConfig().getDouble("economy.fuel-per-100-blocks")+p.getConfig().getDouble("economy.maintenance-per-flight");f.airline.money-=costs;f.aircraft.condition=Math.max(.1,f.aircraft.condition-.01);}
   if(f.status==FlightStatus.DEPARTED&&now>=f.departureAt+3000)f.status=FlightStatus.CRUISE;
   if(f.status==FlightStatus.CRUISE&&now>=f.arrivalAt-15000){f.status=FlightStatus.APPROACH;if(p.gates.assignArrival(f)==null){f.arrivalAt=now+5000;return;}}
-  if(f.status==FlightStatus.APPROACH&&now>=f.arrivalAt){f.status=FlightStatus.LANDED;f.airline.money+=(long)f.booked*f.ticketPrice*.85;f.airline.reputation=Math.min(100,f.airline.reputation+.05);p.airportLevels.recordFlight(f);}
+  if(f.status==FlightStatus.APPROACH&&now>=f.arrivalAt){f.status=FlightStatus.LANDING;f.rolloutAt=now+8000L;}\n  if(f.status==FlightStatus.LANDING&&now>=f.rolloutAt){f.status=FlightStatus.ROLLOUT;}\n  if(f.status==FlightStatus.ROLLOUT&&now>=f.rolloutAt+8000L){f.status=FlightStatus.LANDED;f.airline.money+=(long)f.booked*f.ticketPrice*.85;f.airline.reputation=Math.min(100,f.airline.reputation+.05);p.airportLevels.recordFlight(f);}
 }
 }
