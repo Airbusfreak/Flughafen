@@ -9,7 +9,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryType;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.view.AnvilView;
@@ -102,7 +102,7 @@ public final class FlightDetailsGUI implements Listener {
         if(!e.getView().getTitle().equals("Neuer Flugpreis"))return;
         ItemStack first=e.getInventory().getItem(0);
         if(first==null)return;
-        AnvilView view=e.getView();
+        if(!(e.getView() instanceof AnvilView view))return;
         String text=view.getRenameText();
         if(text==null||text.isBlank()||!text.matches("\\d{1,6}")){e.setResult(null);return;}
         int value;
@@ -164,7 +164,7 @@ public final class FlightDetailsGUI implements Listener {
             Flight f=p.storage.flights.get(editingPrice.get(player.getUniqueId()));
             if(f==null){player.closeInventory();return;}
             if(!canEdit(player,f)){player.closeInventory();return;}
-            AnvilView view=e.getView();
+            if(!(e.getView() instanceof AnvilView view))return;
             String text=view.getRenameText();
             if(text==null||!text.matches("\\d{1,6}")){player.sendMessage("§cBitte eine Zahl zwischen 10 und 1.000.000 eingeben.");return;}
             int value=Integer.parseInt(text);
