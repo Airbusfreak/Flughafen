@@ -232,7 +232,7 @@ public final class FlightRenderer {
         }
     }
 
-    private ItemStack aircraftItem(
+    ItemStack aircraftItem(
             String model,
             String type,
             Livery livery
