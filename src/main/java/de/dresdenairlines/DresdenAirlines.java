@@ -15,6 +15,7 @@ public final class DresdenAirlines extends JavaPlugin {
  public SimulationManager simulation;
  public AirlineManager airlines;
  public AirlineGUI airlineGUI;
+ public LiveryGUI liveryGUI;
  public EmployeeGUI employeeGUI;
  public AirportGUI airportGUI;
  public TransitGUI transitGUI;
@@ -38,6 +39,7 @@ public final class DresdenAirlines extends JavaPlugin {
   preGenerator=new RoutePreGenerator(this);
   airlines=new AirlineManager(this);
   airlineGUI=new AirlineGUI(this);
+  liveryGUI=new LiveryGUI(this);
   employeeGUI=new EmployeeGUI(this);
   airportGUI=new AirportGUI(this);
   transitGUI=new TransitGUI(this);
@@ -50,6 +52,7 @@ public final class DresdenAirlines extends JavaPlugin {
   getServer().getPluginManager().registerEvents(airports,this);
   getServer().getPluginManager().registerEvents(stations,this);
   getServer().getPluginManager().registerEvents(airlineGUI,this);
+  getServer().getPluginManager().registerEvents(liveryGUI,this);
   getServer().getPluginManager().registerEvents(employeeGUI,this);
   getServer().getPluginManager().registerEvents(airportGUI,this);
   getServer().getPluginManager().registerEvents(transitGUI,this);
