@@ -21,6 +21,7 @@ public class Storage {
                 Airline a=new Airline(u,y.getString(k+".name","Airline"),y.getString(k+".code","AIR"),
                         y.getString(k+".home","DRE"),y.getDouble(k+".money",100000));
                 a.reputation=y.getDouble(k+".reputation",50);
+                a.livery=new Livery(y.getInt(k+".livery.primary",0xFFFFFF),y.getInt(k+".livery.secondary",0xFFFFFF),y.getInt(k+".livery.accent",0xFFFFFF));
                 airlines.put(u,a);
 
                 for(String id:y.getStringList(k+".aircraft")){
@@ -65,6 +66,9 @@ public class Storage {
             y.set(k+".home",a.homeAirport);
             y.set(k+".money",a.money);
             y.set(k+".reputation",a.reputation);
+            y.set(k+".livery.primary",a.livery.primary);
+            y.set(k+".livery.secondary",a.livery.secondary);
+            y.set(k+".livery.accent",a.livery.accent);
 
             List<String> ac=new ArrayList<>();
             for(Aircraft x:a.fleet){
