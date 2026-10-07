@@ -7,6 +7,7 @@ public class Airline {
     public final List<Aircraft> fleet=new ArrayList<>();
     public final List<Route> routes=new ArrayList<>();
     public final List<Employee> employees=new ArrayList<>();
+    public Livery livery=new Livery();
     public Airline(UUID owner,String name,String code,String home,double money){
         this.owner=owner;this.name=name;this.code=code;this.homeAirport=home;this.money=money;
     }
