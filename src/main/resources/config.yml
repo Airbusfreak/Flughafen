@@ -7,7 +7,7 @@ airports:
   generation-chance: 0.22
   minimum-distance: 1800
   allowed-worlds:
-    - world
+    - Probe_Welt
   save-world-after-generation: true
   terrain-search-radius: 192
   terrain-search-step: 12
