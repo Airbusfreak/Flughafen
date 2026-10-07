@@ -80,7 +80,7 @@ public final class EmployeeGUI implements Listener {
             for(int i=0;i<slots.length;i++){
                 if(e.getRawSlot()==slots[i]){
                     EmployeeManager.Role r=EmployeeManager.Role.values()[i];
-                    Employee x=p.employees.hire(r.display);
+                    Employee x=p.employees.hire(a,r.display);
                     pl.sendMessage(x==null?"§cEinstellung nicht möglich.":"§aMitarbeiter eingestellt: §f"+x.name+" §7("+x.role+")");
                     open(pl);
                     return;
