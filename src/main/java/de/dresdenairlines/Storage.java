@@ -56,7 +56,11 @@ public class Storage {
         }
     }
 
-    private Livery.Pattern parseLiveryPattern(String value){\n        try{return Livery.Pattern.valueOf(value.toUpperCase());}catch(Exception e){return Livery.Pattern.CLASSIC;}\n    }\n\n    public void save(){
+    private Livery.Pattern parseLiveryPattern(String value){
+        try{return Livery.Pattern.valueOf(value.toUpperCase());}catch(Exception e){return Livery.Pattern.CLASSIC;}
+    }
+
+    public void save(){
         var y=new YamlConfiguration();
         for(var e:airlines.entrySet()){
             String k=e.getKey().toString();
