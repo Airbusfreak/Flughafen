@@ -275,20 +275,52 @@ public final class Commands implements CommandExecutor, TabCompleter {
                         p.liveryGUI.open(player);
                         return true;
                     }
+
                     if (args.length >= 5 && args[1].equalsIgnoreCase("set")) {
                         try {
                             airline.livery.primary = parseHex(args[2]);
                             airline.livery.secondary = parseHex(args[3]);
                             airline.livery.accent = parseHex(args[4]);
                             p.storage.save();
-                            player.sendMessage(ChatColor.GREEN + "Lackierung gespeichert: #" + LiveryGUI.hex(airline.livery.primary) + " / #" + LiveryGUI.hex(airline.livery.secondary) + " / #" + LiveryGUI.hex(airline.livery.accent));
+                            player.sendMessage(ChatColor.GREEN + "Lackierung gespeichert.");
                         } catch (IllegalArgumentException ex) {
                             player.sendMessage(ChatColor.RED + "Ungültige HEX-Farbe. Beispiel: #123456");
                         }
                         return true;
                     }
+
+                    if (args.length >= 3 && args[1].equalsIgnoreCase("tail")) {
+                        try {
+                            airline.livery.tail = parseHex(args[2]);
+                            p.storage.save();
+                            player.sendMessage(ChatColor.GREEN + "Heckfarbe gespeichert: #" + LiveryGUI.hex(airline.livery.tail));
+                        } catch (IllegalArgumentException ex) {
+                            player.sendMessage(ChatColor.RED + "Ungültige HEX-Farbe. Beispiel: #123456");
+                        }
+                        return true;
+                    }
+
+                    if (args.length >= 3 && args[1].equalsIgnoreCase("pattern")) {
+                        try {
+                            airline.livery.pattern = switch (args[2].toLowerCase()) {
+                                case "classic" -> Livery.Pattern.CLASSIC;
+                                case "mono", "monochrome" -> Livery.Pattern.MONOCHROME;
+                                case "two-tone", "twotone" -> Livery.Pattern.TWO_TONE;
+                                case "tail", "tail-accent" -> Livery.Pattern.TAIL_ACCENT;
+                                default -> throw new IllegalArgumentException();
+                            };
+                            p.storage.save();
+                            player.sendMessage(ChatColor.GREEN + "Lackierungsmuster: " + airline.livery.pattern);
+                        } catch (IllegalArgumentException ex) {
+                            player.sendMessage(ChatColor.RED + "Muster: classic, mono, two-tone oder tail");
+                        }
+                        return true;
+                    }
+
                     player.sendMessage(ChatColor.YELLOW + "/airline livery");
                     player.sendMessage(ChatColor.YELLOW + "/airline livery set <primär> <sekundär> <akzent>");
+                    player.sendMessage(ChatColor.YELLOW + "/airline livery tail <hex>");
+                    player.sendMessage(ChatColor.YELLOW + "/airline livery pattern <classic|mono|two-tone|tail>");
                     return true;
                 }
 
@@ -1469,6 +1501,22 @@ public final class Commands implements CommandExecutor, TabCompleter {
                 );
             }
 
+
+            if (args[0].equalsIgnoreCase("livery") && args.length == 2) {
+                result.add("set");
+                result.add("tail");
+                result.add("pattern");
+                return filter(result, args[1]);
+            }
+
+            if (args[0].equalsIgnoreCase("livery") && args.length == 3 &&
+                    args[1].equalsIgnoreCase("pattern")) {
+                result.add("classic");
+                result.add("mono");
+                result.add("two-tone");
+                result.add("tail");
+                return filter(result, args[2]);
+            }
 
             if (args[0].equalsIgnoreCase("buy") &&
                     args.length == 2) {
