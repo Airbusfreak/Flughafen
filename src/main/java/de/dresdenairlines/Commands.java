@@ -50,7 +50,9 @@ public final class Commands implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            switch (args[0].toLowerCase()) {\n\n                case "money" -> {
+            switch (args[0].toLowerCase()) {
+
+                case "money" -> {
 
                     player.sendMessage(
                             ChatColor.GOLD +
