@@ -33,7 +33,7 @@ public final class Livery {
 
     public int[] modelColors() {
         return switch (pattern) {
-            case MONOCHROME -> new int[]{primary, primary, primary, primary};
+            case MONOCHROME -> new int[]{primary, primary, accent, primary};
             case TWO_TONE -> new int[]{primary, secondary, accent, secondary};
             case TAIL_ACCENT -> new int[]{primary, secondary, accent, tail};
             case CLASSIC -> new int[]{primary, secondary, accent, tail};
