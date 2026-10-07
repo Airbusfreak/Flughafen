@@ -50,7 +50,7 @@ public final class Commands implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            switch (args[0].toLowerCase()) {
+            switch (args[0].toLowerCase()) {\n\n                case "livery" -> {\n                    if (airline == null) {\n                        player.sendMessage(ChatColor.RED + "Erstelle zuerst eine Airline.");\n                        return true;\n                    }\n                    if (args.length == 1) {\n                        p.liveryGUI.open(player);\n                        return true;\n                    }\n                    if (args.length >= 5 && args[1].equalsIgnoreCase("set")) {\n                        try {\n                            airline.livery.primary = parseHex(args[2]);\n                            airline.livery.secondary = parseHex(args[3]);\n                            airline.livery.accent = parseHex(args[4]);\n                            p.storage.save();\n                            player.sendMessage(ChatColor.GREEN + "Lackierung gespeichert: #" + LiveryGUI.hex(airline.livery.primary) + " / #" + LiveryGUI.hex(airline.livery.secondary) + " / #" + LiveryGUI.hex(airline.livery.accent));\n                        } catch (IllegalArgumentException ex) {\n                            player.sendMessage(ChatColor.RED + "Ungültige HEX-Farbe. Beispiel: #123456");\n                        }\n                        return true;\n                    }\n                    player.sendMessage(ChatColor.YELLOW + "/airline livery");\n                    player.sendMessage(ChatColor.YELLOW + "/airline livery set <primär> <sekundär> <akzent>");\n                    return true;\n                }
 
                 case "money" -> {
 
@@ -1435,6 +1435,7 @@ public final class Commands implements CommandExecutor, TabCompleter {
                 result.add("routes");
                 result.add("info");
                 result.add("ranking");
+                result.add("livery");
 
                 return filter(
                         result,
