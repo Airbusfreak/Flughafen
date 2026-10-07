@@ -5,7 +5,9 @@ import org.bukkit.entity.ItemDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.NamespacedKey;
-import org.bukkit.util.Transformation;\nimport org.bukkit.Color;\nimport org.bukkit.inventory.meta.components.CustomModelDataComponent;
+import org.bukkit.util.Transformation;
+import org.bukkit.Color;
+import org.bukkit.inventory.meta.components.CustomModelDataComponent;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 import net.kyori.adventure.text.Component;
@@ -173,7 +175,8 @@ public final class FlightRenderer {
                 d.setItemStack(
                         aircraftItem(
                                 f.aircraft.model,
-                                f.aircraft.type
+                                f.aircraft.type,
+                                f.airline.livery
                         )
                 );
 
@@ -231,31 +234,30 @@ public final class FlightRenderer {
 
     private ItemStack aircraftItem(
             String model,
-            String type
+            String type,
+            Livery livery
     ) {
 
-        ItemStack item =
-                new ItemStack(
-                        Material.PAPER
-                );
-
-        ItemMeta m =
-                item.getItemMeta();
+        ItemStack item = new ItemStack(Material.PAPER);
+        ItemMeta m = item.getItemMeta();
 
         m.setItemModel(
-                NamespacedKey.fromString(
-                        "dresdenairlines:" + model
-                )
+                NamespacedKey.fromString("dresdenairlines:" + model)
         );
 
-        m.displayName(
-                Component.text(
-                        "✈ " + type
-                )
-        );
+        m.displayName(Component.text("✈ " + type));
 
-        CustomModelDataComponent cmd = m.getCustomModelDataComponent();\n        cmd.setColors(List.of(\n                Color.fromRGB(livery.primary),\n                Color.fromRGB(livery.secondary),\n                Color.fromRGB(livery.accent)\n        ));\n        m.setCustomModelDataComponent(cmd);\n\n        item.setItemMeta(m);
+        CustomModelDataComponent cmd = m.getCustomModelDataComponent();
+        int[] colors = livery.modelColors();
+        cmd.setColors(List.of(
+                Color.fromRGB(colors[0]),
+                Color.fromRGB(colors[1]),
+                Color.fromRGB(colors[2]),
+                Color.fromRGB(colors[3])
+        ));
+        m.setCustomModelDataComponent(cmd);
 
+        item.setItemMeta(m);
         return item;
     }
 
