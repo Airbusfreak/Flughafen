@@ -1765,6 +1765,14 @@ public final class Commands implements CommandExecutor, TabCompleter {
     }
 
 
+    private int parseHex(String value) {
+        String hex = value.startsWith("#") ? value.substring(1) : value;
+        if (!hex.matches("[0-9a-fA-F]{6}")) {
+            throw new IllegalArgumentException("HEX-Farbe muss sechs Stellen haben.");
+        }
+        return Integer.parseInt(hex, 16);
+    }
+
     // =========================================================
     // TAB FILTER
     // =========================================================
