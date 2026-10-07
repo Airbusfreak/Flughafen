@@ -14,13 +14,11 @@
       {
         "type": "minecraft:custom_model_data",
         "index": 2
+      },
+      {
+        "type": "minecraft:custom_model_data",
+        "index": 3
       }
     ]
-  },
-  "tints": [
-    {
-      "type": "minecraft:custom_model_data",
-      "index": 3
-    }
-  ]
+  }
 }
