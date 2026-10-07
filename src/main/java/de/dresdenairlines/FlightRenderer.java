@@ -5,7 +5,7 @@ import org.bukkit.entity.ItemDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.NamespacedKey;
-import org.bukkit.util.Transformation;
+import org.bukkit.util.Transformation;\nimport org.bukkit.Color;\nimport org.bukkit.inventory.meta.components.CustomModelDataComponent;
 import org.joml.AxisAngle4f;
 import org.joml.Vector3f;
 import net.kyori.adventure.text.Component;
@@ -254,7 +254,7 @@ public final class FlightRenderer {
                 )
         );
 
-        item.setItemMeta(m);
+        CustomModelDataComponent cmd = m.getCustomModelDataComponent();\n        cmd.setColors(List.of(\n                Color.fromRGB(livery.primary),\n                Color.fromRGB(livery.secondary),\n                Color.fromRGB(livery.accent)\n        ));\n        m.setCustomModelDataComponent(cmd);\n\n        item.setItemMeta(m);
 
         return item;
     }
