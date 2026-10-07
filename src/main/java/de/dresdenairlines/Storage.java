@@ -21,7 +21,7 @@ public class Storage {
                 Airline a=new Airline(u,y.getString(k+".name","Airline"),y.getString(k+".code","AIR"),
                         y.getString(k+".home","DRE"),y.getDouble(k+".money",100000));
                 a.reputation=y.getDouble(k+".reputation",50);
-                a.livery=new Livery(y.getInt(k+".livery.primary",0xFFFFFF),y.getInt(k+".livery.secondary",0xFFFFFF),y.getInt(k+".livery.accent",0xFFFFFF));
+                a.livery=new Livery(y.getInt(k+".livery.primary",0xFFFFFF),y.getInt(k+".livery.secondary",0xFFFFFF),y.getInt(k+".livery.accent",0xFFFFFF),y.getInt(k+".livery.tail",0xFFFFFF),parseLiveryPattern(y.getString(k+".livery.pattern","CLASSIC")));
                 airlines.put(u,a);
 
                 for(String id:y.getStringList(k+".aircraft")){
@@ -56,7 +56,7 @@ public class Storage {
         }
     }
 
-    public void save(){
+    private Livery.Pattern parseLiveryPattern(String value){\n        try{return Livery.Pattern.valueOf(value.toUpperCase());}catch(Exception e){return Livery.Pattern.CLASSIC;}\n    }\n\n    public void save(){
         var y=new YamlConfiguration();
         for(var e:airlines.entrySet()){
             String k=e.getKey().toString();
@@ -69,6 +69,8 @@ public class Storage {
             y.set(k+".livery.primary",a.livery.primary);
             y.set(k+".livery.secondary",a.livery.secondary);
             y.set(k+".livery.accent",a.livery.accent);
+            y.set(k+".livery.tail",a.livery.tail);
+            y.set(k+".livery.pattern",a.livery.pattern.name());
 
             List<String> ac=new ArrayList<>();
             for(Aircraft x:a.fleet){
