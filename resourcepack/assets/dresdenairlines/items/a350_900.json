@@ -16,5 +16,11 @@
         "index": 2
       }
     ]
-  }
+  },
+  "tints": [
+    {
+      "type": "minecraft:custom_model_data",
+      "index": 3
+    }
+  ]
 }
