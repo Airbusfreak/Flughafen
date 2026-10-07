@@ -8,6 +8,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.entity.ItemDisplay;
+import org.bukkit.util.Transformation;
+import org.joml.AxisAngle4f;
+import org.joml.Vector3f;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -15,11 +19,15 @@ import org.bukkit.metadata.FixedMetadataValue;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public final class LiveryGUI implements Listener {
     private static final String TITLE = "Airline-Lackierung";
     private static final String SELECTION = "livery-selection";
     private final DresdenAirlines p;
+    private final Map<UUID, ItemDisplay> previews = new HashMap<>();
 
     private static final int[] PALETTE = {
             0xFFFFFF, 0x111111, 0x777777, 0xAA0000,
@@ -116,10 +124,15 @@ public final class LiveryGUI implements Listener {
                 "§7Zusätzlich: /airline livery tail <hex>",
                 "§7Muster: /airline livery pattern <classic|mono|two-tone|tail>"));
 
+        inv.setItem(34, item(Material.ENDER_EYE, "§b3D-Vorschau",
+                "§7Das echte Minecraft-Flugzeugmodell wird",
+                "§7vor dir in der Welt angezeigt."));
+
         inv.setItem(53, item(Material.EMERALD, "§aSpeichern",
                 "§7Die Lackierung wird dauerhaft gespeichert."));
 
         player.openInventory(inv);
+        showPreview(player, airline);
     }
 
     private ItemStack dye(int rgb, String name) {
@@ -184,6 +197,12 @@ public final class LiveryGUI implements Listener {
             return;
         }
 
+        if (slot == 34) {
+            showPreview(player, airline);
+            player.sendMessage("§b3D-Vorschau aktualisiert.");
+            return;
+        }
+
         if (slot == 53) {
             p.storage.save();
             player.sendMessage("§aLackierung gespeichert.");
@@ -195,6 +214,44 @@ public final class LiveryGUI implements Listener {
     public void close(InventoryCloseEvent e) {
         if (TITLE.equals(e.getView().getTitle()) && e.getPlayer() instanceof Player player) {
             player.removeMetadata(SELECTION, p);
+            removePreview(player.getUniqueId());
+        }
+    }
+
+    private void showPreview(Player player, Airline airline) {
+        removePreview(player.getUniqueId());
+
+        String model = airline.fleet.isEmpty() ? "a320" : airline.fleet.get(0).model;
+        String type = airline.fleet.isEmpty() ? "A320" : airline.fleet.get(0).type;
+
+        org.bukkit.Location loc = player.getLocation().clone();
+        org.bukkit.util.Vector direction = loc.getDirection().normalize();
+        loc.add(direction.multiply(12));
+        loc.add(0, 2.5, 0);
+        loc.setYaw(player.getLocation().getYaw());
+        loc.setPitch(0);
+
+        ItemDisplay display = player.getWorld().spawn(loc, ItemDisplay.class);
+        display.setPersistent(false);
+        display.setItemStack(p.renderer.aircraftItem(model, type, airline.livery));
+        display.setTransformation(new Transformation(
+                new Vector3f(0, 0, 0),
+                new AxisAngle4f(),
+                new Vector3f(0.65f, 0.65f, 0.65f),
+                new AxisAngle4f()
+        ));
+        display.setTeleportDuration(0);
+        display.setViewRange(64);
+        display.customName(net.kyori.adventure.text.Component.text("✈ Lackierungs-Vorschau"));
+        display.setCustomNameVisible(true);
+
+        previews.put(player.getUniqueId(), display);
+    }
+
+    private void removePreview(UUID uuid) {
+        ItemDisplay display = previews.remove(uuid);
+        if (display != null && !display.isDead()) {
+            display.remove();
         }
     }
 
