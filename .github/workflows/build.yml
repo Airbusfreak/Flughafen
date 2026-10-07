@@ -26,8 +26,26 @@ jobs:
       - name: Build
         run: gradle build
 
+      - name: Package Resourcepack
+        run: cd resourcepack && zip -r ../DresdenAirlines-Resourcepack.zip .
+
+      - name: Package Datapack
+        run: cd datapack && zip -r ../DresdenAirlines-Datapack.zip .
+
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
           name: DresdenAirlines-JAR
           path: build/libs/*.jar
+
+      - name: Upload Resourcepack
+        uses: actions/upload-artifact@v4
+        with:
+          name: DresdenAirlines-Resourcepack
+          path: DresdenAirlines-Resourcepack.zip
+
+      - name: Upload Datapack
+        uses: actions/upload-artifact@v4
+        with:
+          name: DresdenAirlines-Datapack
+          path: DresdenAirlines-Datapack.zip
