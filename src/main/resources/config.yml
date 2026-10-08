@@ -16,7 +16,7 @@ airports:
   terminal-width: 65
   terminal-depth: 48
   village-generation:
-    enabled: true
+    enabled: false
     chance: 0.16
     search-radius: 96
     size: 45
@@ -86,7 +86,6 @@ railways:
     free: true
     player-operated: false
     long-distance: false
-
 
 airport-levels:
   enabled: true
