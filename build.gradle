@@ -19,6 +19,8 @@ dependencies {
 }
 
 def javaVersion = mcVersion.startsWith('26.') ? 25 : 21
+def apiVersion = mcVersion.startsWith('26.') ? mcVersion : '1.21'
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(javaVersion)
@@ -31,6 +33,6 @@ tasks.named('jar') {
 
 processResources {
     filesMatching('plugin.yml') {
-        expand(version: project.version)
+        expand(version: project.version, apiVersion: apiVersion)
     }
 }
