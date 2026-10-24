@@ -41,8 +41,21 @@ jobs:
           mkdir -p artifacts/26.3
           cp build/libs/*.jar artifacts/26.3/DresdenAirlines-26.3.jar
 
-      - name: Package Resourcepack
-        run: cd resourcepack && zip -r ../DresdenAirlines-Resourcepack.zip .
+      - name: Package version-specific Resourcepacks
+        run: |
+          cp -a resourcepack resourcepack-1.21.11
+          cp -a resourcepack resourcepack-26.3
+          cat > resourcepack-26.3/pack.mcmeta <<'EOF'
+          {
+            "pack": {
+              "description": "DresdenAirlines 26.3 – aircraft models",
+              "min_format": [97, 1],
+              "max_format": [97, 1]
+            }
+          }
+          EOF
+          cd resourcepack-1.21.11 && zip -qr ../DresdenAirlines-Resourcepack-1.21.11.zip .
+          cd ../resourcepack-26.3 && zip -qr ../DresdenAirlines-Resourcepack-26.3.zip .
 
       - name: Package Datapack
         run: cd datapack && zip -r ../DresdenAirlines-Datapack.zip .
@@ -59,11 +72,17 @@ jobs:
           name: DresdenAirlines-26.3
           path: artifacts/26.3/DresdenAirlines-26.3.jar
 
-      - name: Upload Resourcepack
+      - name: Upload Resourcepack 1.21.11
         uses: actions/upload-artifact@v4
         with:
-          name: DresdenAirlines-Resourcepack
-          path: DresdenAirlines-Resourcepack.zip
+          name: DresdenAirlines-Resourcepack-1.21.11
+          path: DresdenAirlines-Resourcepack-1.21.11.zip
+
+      - name: Upload Resourcepack 26.3
+        uses: actions/upload-artifact@v4
+        with:
+          name: DresdenAirlines-Resourcepack-26.3
+          path: DresdenAirlines-Resourcepack-26.3.zip
 
       - name: Upload Datapack
         uses: actions/upload-artifact@v4
