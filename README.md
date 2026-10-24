@@ -1,6 +1,15 @@
 # DresdenAirlines 4.0.0
 
-Paper 1.21.11 / Java 21 airline and airport simulation for multiplayer servers.
+Paper plugin für die Airline- und Flughafensimulation. Unterstützte Build-Ziele:
+- Minecraft 1.21.11 / Java 21
+- Minecraft 26.2 / Java 25
+- Minecraft 26.3 / Java 25
+
+## Steampunk-Server
+
+Die Installationsanleitung für eine neue Steampunk-Welt mit Terralith, Amplified Nether, Stellarity, Dungeons and Taverns, Crop & Kettle und dem passenden Resourcepack steht in [STEAMPUNK_INSTALLATION.md](STEAMPUNK_INSTALLATION.md).
+
+**Wichtig:** Weltgenerierungs-Datapacks müssen vor der ersten Welterstellung installiert sein. Der Server muss für Minecraft 26.x mit Java 25 laufen. Erst in einer Testwelt prüfen, bevor der Server für Spieler freigegeben wird.
 
 ## Neu in 4.0.0
 - realistische Flugabfertigung: Gate -> Boarding -> Taxiing -> Start -> Cruise -> Approach -> Landung
@@ -54,6 +63,3 @@ Keine Boeing-Flugzeuge.
 
 ## Persistenz
 Airlines, Flotten, Routen, Geld und Reputation werden gespeichert. Flughäfen und deren Level werden gespeichert. Die tatsächlichen Airport-Blöcke bleiben im Welt-Save erhalten. Dorf-Bahnstationen und deren Strecken werden ebenfalls gespeichert.
-
-## Hinweis zur Entwicklung
-Die Umgebung dieses Builds hatte kein installiertes Gradle und keinen externen Netzwerkzugriff. Deshalb konnte gegen die Paper-API kein echter Gradle-Compile durchgeführt werden. Das Paket wurde nach der Änderung strukturell und per ZIP-Test geprüft.
