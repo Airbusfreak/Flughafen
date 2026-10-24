@@ -25,7 +25,7 @@ Quellen zur Versionsauswahl: [Paper-Installationsdoku](https://docs.papermc.io/p
 1. Öffne das CloudNord-Panel und stoppe den Server.
 2. Sichere den aktuellen Serverordner, auch wenn die Welten bereits gelöscht wurden. So kannst du Konfigurationen wiederherstellen.
 3. Wähle Paper **26.2** und Java **25** im Panel. Verwende nicht den Vanilla-Server und keinen Snapshot-Build.
-4. Setze den Weltnamen in `server.properties` auf `level-name=dresden_steampunk`. Falls CloudNord dafür ein eigenes Feld im Panel hat, nutze dieses Feld.
+4. Setze den Weltnamen in `server.properties` auf `level-name=world`. Falls CloudNord dafür ein eigenes Feld im Panel hat, nutze dieses Feld.
 5. Setze in `server.properties` außerdem `level-seed=` auf leer oder entferne die Zeile nicht manuell, wenn das Panel die Datei automatisch verwaltet. Optional kannst du später einen festen Seed setzen.
 6. Noch **nicht** starten: Die Weltgenerierungs-Datapacks müssen vor dem ersten Start vorhanden sein.
 
@@ -33,7 +33,7 @@ Quellen zur Versionsauswahl: [Paper-Installationsdoku](https://docs.papermc.io/p
 
 Lade von den oben verlinkten offiziellen Modrinth-Projektseiten jeweils die **Data Pack**-Datei für Minecraft 26.2 herunter, keine Fabric-/Forge-/NeoForge-Mod-JARs.
 
-1. Lege im Server-Dateimanager den Ordner `dresden_steampunk/datapacks` an. Er muss neben `server.properties` im Server-Hauptordner liegen.
+1. Lege im Server-Dateimanager den Ordner `world/datapacks` an. Er muss neben `server.properties` im Server-Hauptordner liegen.
 2. Lade die ZIP-Dateien für **Terralith**, **Amplified Nether**, **Stellarity**, **Dungeons and Taverns** und **Crop & Kettle** direkt in diesen Ordner. Die ZIP-Dateien nicht in weitere Unterordner entpacken.
 3. Prüfe, dass jede ZIP-Datei im Stamm eine `pack.mcmeta` und die zugehörigen Daten enthält. Wenn der Download eine zusätzliche oberste Ordner-Ebene hat, wähle die ZIP, die direkt mit `pack.mcmeta` beginnt.
 4. Jetzt den Server starten. Der erste Weltstart erzeugt die neue Welt mit den installierten Datapacks.
@@ -58,8 +58,8 @@ Wenn der Server beim Weltstart einen Datapack-Fehler meldet, stoppe ihn, entfern
    - `DresdenAirlines-Resourcepack-26.2`
    - `DresdenAirlines-Datapack-26.2`
 4. Entpacke den Artifact-Download, falls GitHub ihn als äußere ZIP-Datei herunterlädt. Lege nur `DresdenAirlines-26.2.jar` in den Ordner `plugins`.
-5. Das DresdenAirlines-Datapack ist optional für die Fluglinien-Funktionen. Wenn du es verwenden möchtest, kopiere seinen Inhalt in `dresden_steampunk/datapacks`, sodass `pack.mcmeta` direkt im Datapack-Stamm liegt.
-6. Starte den Server und kontrolliere die Konsole auf Fehler. Prüfe danach `plugins/DresdenAirlines/config.yml`: Die erlaubte Welt ist bereits auf `dresden_steampunk` eingestellt.
+5. Das DresdenAirlines-Datapack ist optional für die Fluglinien-Funktionen. Wenn du es verwenden möchtest, kopiere seinen Inhalt in `world/datapacks`, sodass `pack.mcmeta` direkt im Datapack-Stamm liegt.
+6. Starte den Server und kontrolliere die Konsole auf Fehler. Prüfe danach `plugins/DresdenAirlines/config.yml`: Die erlaubte Welt ist bereits auf `world` eingestellt.
 7. Teste die Flughafen-Generierung erst in einem abgelegenen Bereich. Terralith hat teils steiles Gelände; DresdenAirlines sucht selbst geeignete ebene Flächen. Automatisch generierte Flughäfen können deshalb seltene Versuche benötigen.
 
 ## Teil D – Resourcepacks für alle Spieler
