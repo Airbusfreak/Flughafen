@@ -42,7 +42,7 @@ Lade von den oben verlinkten offiziellen Modrinth-Projektseiten jeweils die **Da
 ### Reihenfolge und mögliche Konflikte
 
 - **Terralith** übernimmt die Oberwelt-Biome und das Terrain.
-- **Amplified Nether** übernimmt die Nether-Terrainform. Nicht zusätzlich Incendium installieren; dessen Projektseite erklärt diese Kombination für inkompatibel.
+- **Amplified Nether** übernimmt die Nether-Terrainform; **Amplified Nether Height** ergänzt die dafür vorgesehene Höhen-/Logical-Height-Anpassung. Nicht zusätzlich Incendium installieren; dessen Projektseite erklärt diese Kombination für inkompatibel.
 - **Stellarity** gestaltet das End neu und ergänzt Waffen/Mechaniken.
 - **Dungeons and Taverns** ergänzt Strukturen. Die gemeinsame Kombination mit Stellarity und den Weltgenerierungs-Packs wurde nicht in einer Ingame-Testwelt verifiziert.
 - **Crop & Kettle** ergänzt Kochen, Pflanzen und viele Rezepte. Es ist ein Datapack, kein Paper-Plugin und kein vollständiger Create-Ersatz.
