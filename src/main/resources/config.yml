@@ -1,3 +1,5 @@
+# Recommended primary world name for the Steampunk setup:
+# set level-name=dresden_steampunk in server.properties BEFORE first start.
 airports:
   automatic-generation:
     enabled: true
@@ -7,7 +9,7 @@ airports:
   generation-chance: 0.22
   minimum-distance: 1800
   allowed-worlds:
-    - Probe_Welt
+    - dresden_steampunk
   save-world-after-generation: true
   terrain-search-radius: 192
   terrain-search-step: 12
@@ -86,25 +88,20 @@ railways:
     free: true
     player-operated: false
     long-distance: false
-
 airport-levels:
   enabled: true
   level-2-passengers: 250
   level-3-passengers: 750
   level-4-passengers: 2000
   level-5-passengers: 5000
-
 events:
   enabled: true
   chance: 0.22
-
 baggage:
   enabled: true
   max-carts-per-flight: 3
-
 ranking:
   enabled: true
-
 employees:
   enabled: true
   salary-interval-seconds: 3600
