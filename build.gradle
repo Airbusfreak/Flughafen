@@ -3,11 +3,32 @@ plugins {
 }
 
 group = 'de.dresdenairlines'
-version = '4.0.0'
 
-repositories { maven { url = 'https://repo.papermc.io/repository/maven-public/' } }
-dependencies { compileOnly 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT' }
+def mcVersion = (findProperty('mcVersion') ?: '1.21.11').toString()
+def pluginVersion = (findProperty('pluginVersion') ?: '4.0.0').toString()
+version = pluginVersion
 
-java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
+repositories {
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+}
 
-processResources { filesMatching('plugin.yml') { expand(version: project.version) } }
+dependencies {
+    compileOnly "io.papermc.paper:paper-api:${mcVersion}-R0.1-SNAPSHOT"
+}
+
+def javaVersion = mcVersion.startsWith('26.') ? 25 : 21
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(javaVersion)
+    }
+}
+
+tasks.named('jar') {
+    archiveBaseName = "DresdenAirlines-${mcVersion}"
+}
+
+processResources {
+    filesMatching('plugin.yml') {
+        expand(version: project.version)
+    }
+}
