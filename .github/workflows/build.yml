@@ -14,7 +14,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Java 21
+      - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
@@ -29,7 +29,13 @@ jobs:
           mkdir -p artifacts/1.21.11
           cp build/libs/*.jar artifacts/1.21.11/DresdenAirlines-1.21.11.jar
 
-      - name: Java 25
+      - name: Build Minecraft 26.2 plugin
+        run: |
+          gradle clean build -PmcVersion=26.2 -PpluginVersion=4.0.0-26.2
+          mkdir -p artifacts/26.2
+          cp build/libs/*.jar artifacts/26.2/DresdenAirlines-26.2.jar
+
+      - name: Setup Java 25
         uses: actions/setup-java@v4
         with:
           java-version: '25'
@@ -37,34 +43,88 @@ jobs:
 
       - name: Build Minecraft 26.3 plugin
         run: |
-          gradle clean build -PmcVersion=26.3 -PpluginVersion=26.3.0
+          gradle clean build -PmcVersion=26.3 -PpluginVersion=4.0.0-26.3
           mkdir -p artifacts/26.3
           cp build/libs/*.jar artifacts/26.3/DresdenAirlines-26.3.jar
 
-      - name: Package version-specific Resourcepacks
+      - name: Package version-specific Resourcepacks and Datapacks
         run: |
-          cp -a resourcepack resourcepack-1.21.11
-          cp -a resourcepack resourcepack-26.3
-          cat > resourcepack-26.3/pack.mcmeta <<'EOF'
+          set -e
+          for version in 1.21.11 26.2 26.3; do
+            mkdir -p "packaging/$version"
+            cp -a resourcepack/. "packaging/$version/resourcepack/"
+            cp -a datapack/. "packaging/$version/datapack/"
+          done
+
+          cat > packaging/1.21.11/resourcepack/pack.mcmeta <<'EOF'
           {
             "pack": {
-              "description": "DresdenAirlines 26.3 – aircraft models",
+              "pack_format": 75,
+              "description": "DresdenAirlines 4.0.0 – aircraft models (1.21.11)"
+            }
+          }
+          EOF
+          cat > packaging/26.2/resourcepack/pack.mcmeta <<'EOF'
+          {
+            "pack": {
+              "description": "DresdenAirlines – aircraft models (26.2)",
+              "min_format": [88, 0],
+              "max_format": [88, 0]
+            }
+          }
+          EOF
+          cat > packaging/26.3/resourcepack/pack.mcmeta <<'EOF'
+          {
+            "pack": {
+              "description": "DresdenAirlines – aircraft models (26.3)",
               "min_format": [97, 1],
               "max_format": [97, 1]
             }
           }
           EOF
-          cd resourcepack-1.21.11 && zip -qr ../DresdenAirlines-Resourcepack-1.21.11.zip .
-          cd ../resourcepack-26.3 && zip -qr ../DresdenAirlines-Resourcepack-26.3.zip .
+          cat > packaging/1.21.11/datapack/pack.mcmeta <<'EOF'
+          {
+            "pack": {
+              "pack_format": 94,
+              "description": "DresdenAirlines Datapack (1.21.11)"
+            }
+          }
+          EOF
+          cat > packaging/26.2/datapack/pack.mcmeta <<'EOF'
+          {
+            "pack": {
+              "description": "DresdenAirlines Datapack (26.2)",
+              "min_format": [107, 1],
+              "max_format": [107, 1]
+            }
+          }
+          EOF
+          cat > packaging/26.3/datapack/pack.mcmeta <<'EOF'
+          {
+            "pack": {
+              "description": "DresdenAirlines Datapack (26.3)",
+              "min_format": [121, 0],
+              "max_format": [121, 0]
+            }
+          }
+          EOF
 
-      - name: Package Datapack
-        run: cd datapack && zip -r ../DresdenAirlines-Datapack.zip .
+          for version in 1.21.11 26.2 26.3; do
+            (cd "packaging/$version/resourcepack" && zip -qr "../../../DresdenAirlines-Resourcepack-$version.zip" .)
+            (cd "packaging/$version/datapack" && zip -qr "../../../DresdenAirlines-Datapack-$version.zip" .)
+          done
 
       - name: Upload Minecraft 1.21.11 JAR
         uses: actions/upload-artifact@v4
         with:
           name: DresdenAirlines-1.21.11
           path: artifacts/1.21.11/DresdenAirlines-1.21.11.jar
+
+      - name: Upload Minecraft 26.2 JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: DresdenAirlines-26.2
+          path: artifacts/26.2/DresdenAirlines-26.2.jar
 
       - name: Upload Minecraft 26.3 JAR
         uses: actions/upload-artifact@v4
@@ -78,14 +138,32 @@ jobs:
           name: DresdenAirlines-Resourcepack-1.21.11
           path: DresdenAirlines-Resourcepack-1.21.11.zip
 
+      - name: Upload Resourcepack 26.2
+        uses: actions/upload-artifact@v4
+        with:
+          name: DresdenAirlines-Resourcepack-26.2
+          path: DresdenAirlines-Resourcepack-26.2.zip
+
       - name: Upload Resourcepack 26.3
         uses: actions/upload-artifact@v4
         with:
           name: DresdenAirlines-Resourcepack-26.3
           path: DresdenAirlines-Resourcepack-26.3.zip
 
-      - name: Upload Datapack
+      - name: Upload Datapack 1.21.11
         uses: actions/upload-artifact@v4
         with:
-          name: DresdenAirlines-Datapack
-          path: DresdenAirlines-Datapack.zip
+          name: DresdenAirlines-Datapack-1.21.11
+          path: DresdenAirlines-Datapack-1.21.11.zip
+
+      - name: Upload Datapack 26.2
+        uses: actions/upload-artifact@v4
+        with:
+          name: DresdenAirlines-Datapack-26.2
+          path: DresdenAirlines-Datapack-26.2.zip
+
+      - name: Upload Datapack 26.3
+        uses: actions/upload-artifact@v4
+        with:
+          name: DresdenAirlines-Datapack-26.3
+          path: DresdenAirlines-Datapack-26.3.zip
