@@ -1,7 +1,7 @@
 name: DresdenAirlines
-version: 4.0.0
+version: ${version}
 main: de.dresdenairlines.DresdenAirlines
-api-version: '1.21'
+api-version: '${apiVersion}'
 description: Multiplayer airline, airport and passenger flight simulation
 author: DresdenAirlines
 commands:
