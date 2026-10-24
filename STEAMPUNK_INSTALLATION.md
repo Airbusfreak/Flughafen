@@ -16,7 +16,7 @@ Diese Anleitung ist für einen frischen Entwicklungsserver gedacht, auf dem noch
 | Steampunk-Look | [Steampunk Texture Pack](https://modrinth.com/resourcepack/steampunk-texture-pack), Version für 26.2 | Modrinth führt 26.2 |
 | DresdenAirlines | JAR und passende Packs aus GitHub Actions | CI muss grün sein; danach Artefakt für 26.2 wählen |
 
-Quellen zur Versionsauswahl: [Paper-Installationsdoku](https://docs.papermc.io/paper/getting-started/), [Terralith](https://modrinth.com/datapack/terralith), [Amplified Nether](https://modrinth.com/datapack/amplified-nether), [Stellarity](https://modrinth.com/datapack/stellarity), [Dungeons and Taverns](https://modrinth.com/datapack/dungeons-and-taverns), [Crop & Kettle](https://modrinth.com/datapack/crop-and-kettle), [Steampunk Texture Pack](https://modrinth.com/resourcepack/steampunk-texture-pack).
+Quellen zur Versionsauswahl: [Paper-Installationsdoku](https://docs.papermc.io/paper/getting-started/), [Terralith](https://modrinth.com/datapack/terralith), [Amplified Nether](https://modrinth.com/datapack/amplified-nether), [Stellarity](https://modrinth.com/datapack/stellarity), [Dungeons and Taverns](https://modrinth.com/datapack/dungeons-and-taverns), [Mechanism](https://modrinth.com/plugin/mechanism), [Orbit Items](https://modrinth.com/plugin/orbit-items), [Crop & Kettle](https://modrinth.com/datapack/crop-and-kettle), [Steampunk Texture Pack](https://modrinth.com/resourcepack/steampunk-texture-pack).
 
 **Kompatibilitätshinweis:** Die Projektseiten nennen Minecraft 26.2 als kompatibel. Das beweist nicht, dass alle Packs untereinander oder mit DresdenAirlines bereits gemeinsam im Spiel getestet wurden. Deshalb erst mit Testwelt starten. Terralith warnt davor, es aus einer bestehenden Welt zu entfernen oder nachträglich zu einer bestehenden Welt hinzuzufügen.
 
@@ -83,6 +83,8 @@ Minecraft-Server verteilt standardmäßig nur **eine** Server-Resourcepack-URL. 
 - `/airport list` und `/airport generate`: Flughafenverwaltung testen.
 - Neue Chunks in der Oberwelt erkunden; Nether und End über Portale testen.
 - Crop-&-Kettle-Kochbuch craften und neue Pflanzen/Rezepte prüfen.
+- Mechanism-Maschinen in einem Testbereich aufbauen und prüfen, ob ihre Rotation/Interaktionen laufen.
+- Mit Orbit Items die Beispielwaffen testen und danach Steampunk-Gegenstände konfigurieren.
 - Resourcepack mit normalem Minecraft-Client testen.
 - Vor Freigabe den Server neu starten und erneut Konsole/Logs prüfen.
 
