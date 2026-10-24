@@ -51,7 +51,7 @@ jobs:
         run: |
           set -e
           for version in 1.21.11 26.2 26.3; do
-            mkdir -p "packaging/$version"
+            mkdir -p "packaging/$version/resourcepack" "packaging/$version/datapack"
             cp -a resourcepack/. "packaging/$version/resourcepack/"
             cp -a datapack/. "packaging/$version/datapack/"
           done
