@@ -12,8 +12,10 @@ repositories {
     maven { url = 'https://repo.papermc.io/repository/maven-public/' }
 }
 
+def paperApiVersion = mcVersion.startsWith('26.') ? "${mcVersion}.build.+" : "${mcVersion}-R0.1-SNAPSHOT"
+
 dependencies {
-    compileOnly "io.papermc.paper:paper-api:${mcVersion}-R0.1-SNAPSHOT"
+    compileOnly "io.papermc.paper:paper-api:${paperApiVersion}"
 }
 
 def javaVersion = mcVersion.startsWith('26.') ? 25 : 21
