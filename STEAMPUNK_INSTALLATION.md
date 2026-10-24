@@ -67,7 +67,7 @@ Wenn der Server beim Weltstart einen Datapack-Fehler meldet, stoppe ihn, entfern
 Minecraft-Server verteilt standardmäßig nur **eine** Server-Resourcepack-URL. DresdenAirlines, Steampunk Texture Pack, Crop & Kettle und optional Dungeons and Taverns können jeweils eigene Resourcepack-Dateien haben. Nicht einfach mehrere ZIP-Dateien nacheinander in die Server-Resourcepack-Einstellung eintragen.
 
 1. Lade die Version 26.2 des Steampunk Texture Packs herunter.
-2. Lade die zu Crop & Kettle gehörende **Resource Pack**-Datei aus dessen Modrinth-Versionsseite herunter.
+2. Lade die zu Crop & Kettle 1.3.10 gehörende **Resource Pack**-Datei aus dessen Modrinth-Versionsseite herunter. Optional kannst du auch das Resourcepack von Dungeons and Taverns hinzufügen, damit dessen Schlüssel-Texturen sichtbar sind.
 3. Nutze das DresdenAirlines-Resourcepack aus dem GitHub-Artefakt.
 4. Erstelle einen gemeinsamen Resourcepack-Ordner und kopiere die Dateien aller drei Packs hinein, wobei die Ordnerstruktur `assets/` und `pack.mcmeta` erhalten bleibt. Bei Dateikonflikten müssen wir die Modelle und Texturen gezielt zusammenführen; überschreibe nicht blind die DresdenAirlines-Flugzeugmodelle.
 5. Erzeuge aus dem zusammengeführten Ordner eine ZIP-Datei, bei der `pack.mcmeta` direkt im ZIP-Stamm liegt. Setze in der Datei die Resourcepack-Metadaten auf Format **88.0** für Minecraft 26.2.
