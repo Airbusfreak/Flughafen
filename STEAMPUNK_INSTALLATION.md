@@ -8,11 +8,11 @@ Diese Anleitung ist für einen frischen Entwicklungsserver gedacht, auf dem noch
 |---|---|---|
 | Server | Paper 26.2, neuester Stable-Build der 26.2-Linie | Versionslinie vorhanden; nimm im Paper-Download den neuesten als **Release** markierten Build |
 | Java | Java 25 | Von Paper für 26.x gefordert |
-| Oberwelt | [Terralith – Datapack](https://modrinth.com/datapack/terralith), Version 2.6.4 für 26.2 | Modrinth führt eine explizite 26.2-Datapack-Version |
-| Nether | [Amplified Nether](https://modrinth.com/datapack/amplified-nether), Version für 26.2 | Modrinth führt 26.2; nicht mit Incendium kombinieren |
-| End | [Stellarity](https://modrinth.com/datapack/stellarity), Version für 26.2 | Modrinth führt 26.2 |
-| Strukturen | [Dungeons and Taverns](https://modrinth.com/datapack/dungeons-and-taverns), Version für 26.2 | Modrinth führt 26.2; ergänzt Strukturen, nicht eine neue Terrain-Engine |
-| Kochen/Pflanzen | [Crop & Kettle](https://modrinth.com/datapack/crop-and-kettle), Version für 26.2 | Modrinth führt 26.2; enthält eigene Resourcepack-Datei für die Item-Optik |
+| Oberwelt | [Terralith 2.6.4](https://modrinth.com/datapack/terralith/versions?g=26.2), Datapack für 26.2 | Modrinth führt eine explizite 26.2-Datapack-Version |
+| Nether | [Amplified Nether 1.2.15](https://modrinth.com/datapack/amplified-nether/version/xIayvf8F), Datapack für 26.2 | Modrinth führt 26.2; nicht mit Incendium kombinieren |
+| End | [Stellarity](https://modrinth.com/datapack/stellarity), Datapack-Version für 26.2 | Modrinth führt 26.2 |
+| Strukturen | [Dungeons and Taverns](https://modrinth.com/datapack/dungeons-and-taverns), Datapack-Version für 26.2 | Modrinth führt 26.2; ergänzt Strukturen, nicht eine neue Terrain-Engine |
+| Kochen/Pflanzen | [Crop & Kettle](https://modrinth.com/datapack/crop-and-kettle), Datapack-Version für 26.2 | Modrinth führt 26.2; enthält eigene Resourcepack-Datei für die Item-Optik |
 | Steampunk-Look | [Steampunk Texture Pack](https://modrinth.com/resourcepack/steampunk-texture-pack), Version für 26.2 | Modrinth führt 26.2 |
 | DresdenAirlines | JAR und passende Packs aus GitHub Actions | CI muss grün sein; danach Artefakt für 26.2 wählen |
 
@@ -21,6 +21,8 @@ Quellen zur Versionsauswahl: [Paper-Installationsdoku](https://docs.papermc.io/p
 **Kompatibilitätshinweis:** Die Projektseiten nennen Minecraft 26.2 als kompatibel. Das beweist nicht, dass alle Packs untereinander oder mit DresdenAirlines bereits gemeinsam im Spiel getestet wurden. Deshalb erst mit Testwelt starten. Terralith warnt davor, es aus einer bestehenden Welt zu entfernen oder nachträglich zu einer bestehenden Welt hinzuzufügen.
 
 ## Teil A – Paper 26.2 vorbereiten
+
+**Weltname:** Die Welt heißt bei dir `world`. Behalte `level-name=world` in `server.properties`; der Plugin-Config-Eintrag `airports.allowed-worlds: - world` ist bereits darauf eingestellt.
 
 1. Öffne das CloudNord-Panel und stoppe den Server.
 2. Sichere den aktuellen Serverordner, auch wenn die Welten bereits gelöscht wurden. So kannst du Konfigurationen wiederherstellen.
